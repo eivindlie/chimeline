@@ -776,73 +776,87 @@ gh-pages -d dist  # or manual upload of dist/ contents
 
 ## Project Status & Notes
 
-**Current Phase**: Authentication Complete ✅ (`Phase 3` finished)
+**Current Phase**: QR Scanner & Generator Complete ✅ (`Phase 4-6` finished)
 - [x] Phase 1: Project Scaffolding (React Router Framework Mode + SPA config)
 - [x] Phase 2: File-based routing working with `@react-router/fs-routes` + `flatRoutes()`
-- [x] Phase 3: Spotify PKCE OAuth with state parameter (CSRF protection) ✅ COMPLETED THIS SESSION
-  - ✅ `app/lib/spotifyAuth.ts` — PKCE + state generation, code exchange, user profile fetching
-  - ✅ `app/routes/callback.tsx` — OAuth callback handler with state validation
-  - ✅ `app/routes/_index.tsx` — Home page with login/logout buttons, shows username
-  - ✅ User profile fetching from Spotify `/v1/me` endpoint
-  - ✅ Fixed callback flash on successful auth (silent redirect)
-  - ✅ Logout button clears token and user profile
-- [ ] Phase 4: QR Services (qrScanner.ts, qrGenerator.ts) — next priority
-- [ ] Phase 5: Scanner route (`app/routes/scanner.tsx`) with QR scanning
-- [ ] Phase 6: Generator route (`app/routes/generator.tsx`) with QR generation
-- [ ] Phase 7: Spotify search service (`spotifySearch.ts`)
-- [ ] Phase 8: Spotify playlist service (`spotifyPlaylist.ts`)
-- [ ] Phase 9: Root Layout & Navigation with route guards
-- [ ] Phase 10: GitHub Pages 404.html Fallback
-- [ ] Phase 11: Integration Testing & Deployment
+- [x] Phase 3: Spotify PKCE OAuth with state parameter (CSRF protection)
+- [x] Phase 4: QR Services ✅ COMPLETED THIS SESSION
+  - ✅ `app/lib/qrGenerator.ts` — QR code generation with minimal 4-field payload (u, t, a, d)
+  - ✅ `app/lib/qrScanner.ts` — QR decoding via html5-qrcode + camera integration
+  - ✅ Payload optimization: ~50% size reduction vs full JSON
+  - ✅ Fixed JSON parsing for both string and object QR payloads
+- [x] Phase 5: Scanner Route ✅ COMPLETED THIS SESSION
+  - ✅ `app/routes/scanner.tsx` — Live camera QR scanning with playback controls
+  - ✅ `app/routes/scanner.module.css` — Mobile-friendly responsive UI
+  - ✅ Spotify REST API playback (requires active Spotify device)
+  - ✅ Auto-play on QR scan, manual play/pause/stop controls
+  - ✅ Track metadata display (for debugging, removes later)
+  - ✅ Working on mobile via ngrok
+- [x] Phase 6: Generator Route ✅ COMPLETED THIS SESSION
+  - ✅ `app/routes/generator.tsx` — Single-track QR generator
+  - ✅ `app/routes/generator.module.css` — Form UI with QR display & download
+  - ✅ Spotify track fetching & URL/URI/ID parsing
+  - ✅ Download QR as PNG functionality
+  - ✅ JSON payload preview for debugging
+- [ ] Phase 7: Spotify Search & Playlist (batch generation) — next priority
+- [ ] Phase 8: Root Layout & Navigation with route guards
+- [ ] Phase 9: GitHub Pages 404.html Fallback
+- [ ] Phase 10: Integration Testing & Deployment
 
-**Key Decisions**:
-- ✅ React Router Framework Mode v7.13.1 (not vanilla react-router lib) — file-based routing, automatic code splitting
-- ✅ File-based routing with `@react-router/fs-routes` and `flatRoutes()` — auto-discovered routes
-- ✅ SSR disabled — pure static SPA for GitHub Pages
-- ✅ Session storage for tokens — auto-clears on browser close (security + simplicity)
-- ✅ PKCE OAuth flow with state parameter — no server-side secret needed, CSRF protected
-- ✅ User profile fetching — confirms active session with username display
-- ✅ Client-side only auth — no SSR loaders, pure `useEffect` pattern
-- ✅ CSS Modules only — Tailwind removed per user preference
-- ✅ IP loopback for local dev — `http://127.0.0.1:5173` required by Spotify for dev auth
+**Key Decisions Made This Session**:
+- ✅ Switched from npm to pnpm for better peer dependency resolution
+- ✅ qrcode library (pure JS) instead of qrcode.react wrapper — more control
+- ✅ html5-qrcode for camera scanning — clean API, good mobile support
+- ✅ Minimal QR payload with single-letter keys — production-ready size
+- ✅ Zod validation for all Spotify API responses — runtime type safety
+- ✅ REST API fallback for playback — Web Playback SDK (known issue below)
+- ✅ CSS Modules only — no Tailwind, scoped styling
 
-**Completed Features**:
-- ✅ Spotify PKCE OAuth with state parameter for CSRF protection
-- ✅ Token storage in sessionStorage (auto-clears on browser close)
-- ✅ User profile fetching to confirm active session
-- ✅ Login/logout buttons on home page with username display
-- ✅ File-based routing with auto-discovery
-- ✅ Callback handler validates state and redirects silently on success (no error flash)
-- ✅ Development server configured for IP loopback (`--host 127.0.0.1`)
-- ✅ CSS Modules styling support
-- ✅ TypeScript throughout
-- ✅ Security improvements: state parameter prevents CSRF attacks
+**Completed Features** (This Session):
+- ✅ QR code generation with minimal 4-field payload (u=uri, t=title, a=artist, d=releaseDate)
+- ✅ QR code scanning via camera (html5-qrcode)
+- ✅ Single-track QR generator with download
+- ✅ Scanner with play/pause/stop controls
+- ✅ Spotify REST API playback (auto-plays when track scanned)
+- ✅ Track metadata display (useful debugging feature)
+- ✅ Mobile-friendly responsive UI (desktop + phone via ngrok)
+- ✅ Spotify track fetching with URL/URI/ID parsing
+- ✅ JSON payload inspection in UI
+- ✅ Removed redundant types.ts (all types in schemas.ts with Zod)
+- ✅ Fixed route discovery to ignore CSS modules
+- ✅ Improved SQL parsing for JSON string payloads
 
-**Known Gotchas**:
-- GitHub Pages 404 redirect requires sessionStorage restoration in root loader
-- Spotify Web SDK playback requires Premium account (non-premium falls back to preview URL)
-- QR code size limit: ~2000 chars (JSON-encoded CardData)
-- Rate limits: Spotify API allows ~180 requests/15min per IP (tracked by session)
-- Dev server requires `--host 127.0.0.1` for Spotify IP loopback auth requirement
-- `@react-router/fs-routes` requires npm v7+ (legacy-peer-deps may be needed for some dependency trees)
+**Known Issues**:
+- ❌ **Spotify Web Playback SDK not connecting** — `ready` event never fires
+  - Workaround: Use REST API playback (requires Spotify app running on a device)
+  - Investigate: CORS issue? Token scope? Browser policy?
+  - Impact: Users must have Spotify app open; can't play in browser without it
+- Route auth guards not yet implemented (anyone can access /scanner, /generator)
+- Metadata displays in scanner (game-spoiling; remove in final version)
+- Batch QR generation not yet implemented
+- Spotify search not yet implemented
 
 **Development Tips**:
-- Keep dev server running: `npm run dev` (starts at `http://127.0.0.1:5174/` if 5173 in use)
-- Restart dev server after `.env.local` changes
-- Token persists across browser tabs within same sessionStorage window
-- Token auto-clears when all browser windows/tabs closed (security feature)
-- Logout button clears both token and user profile for clean state
-- Testing OAuth: Use logout button to clear session, then login again to test full flow
+- `pnpm dev` to start dev server (auto-reload on file changes)
+- Desktop: Full playback works if Spotify app is open
+- Mobile via ngrok: Works in private mode (fresh session storage)
+- Console has debug logging for QR parsing and player initialization
+- pnpm cleaner than npm for React Router projects; peer deps resolved automatically
 
-**Next Steps**:
-1. Implement QR services (scanner + generator libraries)
-2. Build scanner route with camera integration
-3. Build generator route with search and batch QR generation
-4. Add Spotify search and playlist services
-5. Configure GitHub Pages deployment with 404.html fallback
-6. Test on mobile for camera permissions and QR scanning
+**Next Steps** (Prioritized):
+1. **Fix Web Playback SDK** (investigate why ready event doesn't fire)
+2. **Batch QR generation** from playlists (upload file or paste playlist URL)
+3. **Spotify search integration** (find tracks by title/artist)
+4. **Remove metadata display** from scanner (game production release)
+5. **Route auth guards** (require login for /scanner, /generator)
+6. **GitHub Pages deployment** with 404.html fallback
+7. **PDF export** for printable QR booklets (future enhancement)
 
 ---
 
-**Last Updated**: March 18, 2026 (Session completed)  
-**Status**: Spotify authentication fully working; QR services ready for implementation
+**Last Updated**: March 18, 2026 (Session completed - QR generator & scanner working)  
+**Status**: 
+- ✅ QR generation & scanning fully functional
+- ✅ Spotify playback working via REST API (requires app running)
+- ⚠️ Web Playback SDK needs debugging
+- 🚀 Ready for batch generation & search integration
