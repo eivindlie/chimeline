@@ -14,6 +14,7 @@ export default function CallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       const code = searchParams.get("code");
+      const state = searchParams.get("state");
       const errorParam = searchParams.get("error");
 
       if (errorParam) {
@@ -24,6 +25,12 @@ export default function CallbackPage() {
 
       if (!code) {
         setError("No authorization code received");
+        setTimeout(() => navigate("/"), 3000);
+        return;
+      }
+
+      if (!state) {
+        setError("No state parameter received");
         setTimeout(() => navigate("/"), 3000);
         return;
       }
@@ -39,6 +46,7 @@ export default function CallbackPage() {
         // Exchange code for token
         const { access_token } = await exchangeCodeForToken(
           code,
+          state,
           clientId,
           redirectUri
         );

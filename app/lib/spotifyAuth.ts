@@ -13,6 +13,22 @@ const SPOTIFY_SCOPES = [
 const AUTH_STORAGE_KEY = "spotify_token";
 const PKCE_VERIFIER_KEY = "spotify_pkce_verifier";
 const USER_STORAGE_KEY = "spotify_user";
+const STATE_KEY = "spotify_oauth_state";
+
+/**
+ * Generate a random state for CSRF protection
+ */
+function generateState(): string {
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+  let state = "";
+  for (let i = 0; i < 64; i++) {
+    state += characters.charAt(
+      Math.floor(Math.random() * characters.length)
+    );
+  }
+  return state;
+}
 
 /**
  * Generate PKCE code challenge and verifier
@@ -70,10 +86,12 @@ export async function getAuthUrl(
 ): Promise<string> {
   const { codeVerifier } = generatePKCE();
   const codeChallenge = await generateCodeChallenge(codeVerifier);
+  const state = generateState();
 
-  // Store verifier for later exchange
+  // Store verifier and state for later exchange
   if (typeof window !== "undefined") {
     sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
+    sessionStorage.setItem(STATE_KEY, state);
   }
 
   const params = new URLSearchParams({
@@ -83,6 +101,7 @@ export async function getAuthUrl(
     scope: SPOTIFY_SCOPES.join(" "),
     code_challenge_method: "S256",
     code_challenge: codeChallenge,
+    state,
   });
 
   return `${SPOTIFY_ENDPOINTS.AUTHORIZE}?${params.toString()}`;
@@ -93,13 +112,20 @@ export async function getAuthUrl(
  */
 export async function exchangeCodeForToken(
   code: string,
+  state: string,
   clientId: string,
   redirectUri: string
 ): Promise<{ access_token: string; expires_in: number }> {
   const codeVerifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
+  const storedState = sessionStorage.getItem(STATE_KEY);
 
   if (!codeVerifier) {
     throw new Error("Code verifier not found in session storage");
+  }
+
+  // Verify state for CSRF protection
+  if (state !== storedState) {
+    throw new Error("State mismatch - possible CSRF attack");
   }
 
   const response = await fetch(SPOTIFY_ENDPOINTS.TOKEN, {
@@ -122,6 +148,7 @@ export async function exchangeCodeForToken(
 
   const data = await response.json();
   sessionStorage.removeItem(PKCE_VERIFIER_KEY);
+  sessionStorage.removeItem(STATE_KEY);
 
   return data;
 }
@@ -153,6 +180,7 @@ export function clearToken(): void {
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
     sessionStorage.removeItem(PKCE_VERIFIER_KEY);
     sessionStorage.removeItem(USER_STORAGE_KEY);
+    sessionStorage.removeItem(STATE_KEY);
   }
 }
 
