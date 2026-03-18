@@ -1,0 +1,174 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.container h1 {
+  margin-top: 0;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.container > p {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.formSection {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.inputGroup {
+  margin-bottom: 1rem;
+}
+
+.inputGroup label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: monospace;
+  box-sizing: border-box;
+}
+
+.input:disabled {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.inputGroup small {
+  display: block;
+  margin-top: 0.25rem;
+  color: #999;
+  font-size: 0.875rem;
+}
+
+.button {
+  background: #1db954;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.button:hover:not(:disabled) {
+  background: #1ed760;
+}
+
+.button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.error {
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 4px;
+  padding: 1rem;
+  color: #c33;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.resultsSection {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.resultsSection h2 {
+  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+}
+
+.trackInfo {
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.trackInfo p {
+  margin: 0.5rem 0;
+}
+
+.trackInfo strong {
+  display: inline-block;
+  width: 120px;
+  color: #333;
+}
+
+.trackInfo code {
+  background: #f0f0f0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.qrSection {
+  text-align: center;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+.qrImage {
+  max-width: 400px;
+  width: 100%;
+  height: auto;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+.downloadButton {
+  background: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 1rem;
+}
+
+.downloadButton:hover {
+  background: #357ae8;
+}
+
+.jsonPayload {
+  background: #1e1e1e;
+  color: #00ff00;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  margin: 1rem 0 0 0;
+}

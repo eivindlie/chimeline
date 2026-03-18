@@ -1,4 +1,5 @@
-import type { SpotifyTrack, CardData } from "./types";
+import { parseSpotifyTrack, parseFullCardData, type FullCardData } from "./schemas";
+import type { SpotifyTrack } from "./schemas";
 
 const SPOTIFY_ENDPOINTS = {
   SEARCH: "https://api.spotify.com/v1/search",
@@ -33,7 +34,7 @@ export function parseSpotifyTrackId(input: string): string | null {
 export async function fetchTrackById(
   trackId: string,
   accessToken: string
-): Promise<CardData> {
+): Promise<FullCardData> {
   const response = await fetch(`${SPOTIFY_ENDPOINTS.TRACK}/${trackId}`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -44,20 +45,29 @@ export async function fetchTrackById(
     throw new Error(`Failed to fetch track: ${response.statusText}`);
   }
 
-  const track = (await response.json()) as SpotifyTrack;
+  const data = await response.json();
+  
+  // Validate with Zod
+  let track: SpotifyTrack;
+  try {
+    track = parseSpotifyTrack(data);
+  } catch (error) {
+    throw new Error(
+      `Invalid Spotify API response: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
   return buildCardData(track);
 }
 
 /**
- * Build CardData from Spotify track
+ * Build FullCardData from Spotify track
  */
-function buildCardData(track: SpotifyTrack): CardData {
+function buildCardData(track: SpotifyTrack): FullCardData {
   return {
-    id: track.id,
+    spotifyUri: track.uri,
     title: track.name,
     artist: track.artists.map((a) => a.name).join(", "),
-    album: track.album.name,
-    spotifyUri: track.uri,
     releaseDate: track.album.release_date,
   };
 }

@@ -1,5 +1,6 @@
 import QRCode from "qrcode";
-import type { CardData } from "./types";
+import { toMinimalCardData } from "./schemas";
+import type { CardData } from "./schemas";
 
 const QR_CONFIG = {
   ERROR_CORRECTION: "H", // High error correction (40% redundancy)
@@ -7,10 +8,11 @@ const QR_CONFIG = {
 } as const;
 
 /**
- * Generate QR code as data URL (PNG)
+ * Generate QR code as data URL (PNG) with minimal payload
  */
 export async function generateQRCode(cardData: CardData): Promise<string> {
-  const jsonString = JSON.stringify(cardData);
+  const minimalData = toMinimalCardData(cardData);
+  const jsonString = JSON.stringify(minimalData);
 
   try {
     const qrDataUrl = await QRCode.toDataURL(jsonString, {
@@ -33,12 +35,13 @@ export async function generateQRCode(cardData: CardData): Promise<string> {
 }
 
 /**
- * Generate QR code to canvas element
+ * Generate QR code to canvas element with minimal payload
  */
 export async function generateQRCodeCanvas(
   cardData: CardData
 ): Promise<HTMLCanvasElement> {
-  const jsonString = JSON.stringify(cardData);
+  const minimalData = toMinimalCardData(cardData);
+  const jsonString = JSON.stringify(minimalData);
   const canvas = document.createElement("canvas");
 
   try {
@@ -61,12 +64,13 @@ export async function generateQRCodeCanvas(
 }
 
 /**
- * Generate QR code as blob for download
+ * Generate QR code as blob for download with minimal payload
  */
 export async function generateQRCodeBlob(
   cardData: CardData
 ): Promise<Blob> {
-  const jsonString = JSON.stringify(cardData);
+  const minimalData = toMinimalCardData(cardData);
+  const jsonString = JSON.stringify(minimalData);
   const canvas = document.createElement("canvas");
 
   try {
