@@ -34,11 +34,24 @@ export default function ScannerPage() {
   useEffect(() => {
     if (!token) return;
 
+    console.debug("Loading Spotify Web Playback SDK...");
     const script = document.createElement("script");
     script.src = "https://sdk.scdn.co/spotify-player.js";
+    
+    script.onload = () => {
+      console.debug("SDK script loaded");
+    };
+    
+    script.onerror = () => {
+      console.error("Failed to load Spotify SDK script");
+      setError("Failed to load Spotify SDK");
+    };
+    
     document.body.appendChild(script);
 
     (window as any).onSpotifyWebPlaybackSDKReady = () => {
+      console.debug("Spotify Web Playback SDK ready callback triggered");
+      
       const player = new (window as any).Spotify.Player({
         name: "ChimeLine Scanner",
         getOAuthToken: () => token,
@@ -50,39 +63,46 @@ export default function ScannerPage() {
 
       // Listen for when player is ready
       player.addListener("ready", ({ device_id }: any) => {
-        console.debug("Spotify player ready with device ID:", device_id);
+        console.debug("✓ Spotify player READY with device ID:", device_id);
         setPlayerReady(true);
       });
 
       player.addListener("player_state_changed", (state: any) => {
+        console.debug("Player state changed:", state);
         if (!state) return;
         setIsPlaying(!state.paused);
       });
 
       player.addListener("initialization_error", ({ message }: any) => {
-        console.error("Spotify player init error:", message);
+        console.error("✗ Spotify player init error:", message);
         setError(`Spotify player error: ${message}`);
       });
 
       player.addListener("authentication_error", ({ message }: any) => {
-        console.error("Spotify auth error:", message);
-        setError(`Spotify auth error: ${message}. Try refreshing the page.`);
+        console.error("✗ Spotify auth error:", message);
+        setError(`Spotify auth error: ${message}. Try refreshing.`);
       });
 
       player.addListener("account_error", ({ message }: any) => {
-        console.error("Spotify account error:", message);
+        console.error("✗ Spotify account error:", message);
         setError(`Spotify account error: ${message}`);
       });
 
+      console.debug("Connecting Spotify player...");
       player.connect().then((success: boolean) => {
-        if (!success) {
-          console.error("Failed to connect Spotify player");
-          setError("Failed to connect Spotify player. Try refreshing.");
+        if (success) {
+          console.debug("✓ Player connected successfully");
+        } else {
+          console.error("✗ Failed to connect player");
+          setError("Failed to connect Spotify player");
         }
+      }).catch((err: any) => {
+        console.error("✗ Connect error:", err);
       });
     };
 
     return () => {
+      console.debug("Cleaning up Spotify SDK");
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
@@ -110,54 +130,97 @@ export default function ScannerPage() {
         return;
       }
 
-      if (!playerReady) {
-        setError("Spotify player not ready yet. Try again in a moment.");
-        return;
-      }
-
+      // Try SDK player first, fall back to REST API
       const player = (window as any).spotifyPlayer;
-      if (!player) {
-        setError("Spotify player not initialized. Refresh the page.");
-        return;
+      
+      if (playerReady && player) {
+        console.debug("Using SDK player for playback");
+        player.play({
+          uris: [cardData.spotifyUri],
+        }).then(() => {
+          console.debug("✓ Playing via SDK:", cardData.spotifyUri);
+          setIsPlaying(true);
+        }).catch((err: any) => {
+          const errMsg = err?.message || String(err);
+          console.warn("SDK playback failed, falling back to REST API:", errMsg);
+          playViaRestAPI(cardData);
+        });
+      } else {
+        console.debug("SDK not ready, using REST API for playback");
+        playViaRestAPI(cardData);
       }
-
-      // Use the Web Playback SDK player to play the track
-      player.play({
-        uris: [cardData.spotifyUri],
-      }).then(() => {
-        console.debug("Playing:", cardData.spotifyUri);
-        setIsPlaying(true);
-      }).catch((err: any) => {
-        const errMsg = err?.message || String(err);
-        console.error("Playback error:", errMsg, err);
-        setError(
-          `Failed to play: ${errMsg}`
-        );
-      });
     },
     [token, playerReady]
   );
+
+  const playViaRestAPI = (cardData: FullCardData) => {
+    fetch(`https://api.spotify.com/v1/me/player/play`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        uris: [cardData.spotifyUri],
+      }),
+    })
+      .then((response) => {
+        if (!response.ok && response.status !== 204) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        console.debug("✓ Playing via REST API:", cardData.spotifyUri);
+        setIsPlaying(true);
+      })
+      .catch((err: any) => {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error("✗ REST API playback failed:", errMsg);
+        setError(`Failed to play: ${errMsg}`);
+      });
+  };
 
   const handlePause = useCallback(() => {
     if (!token) return;
 
     const player = (window as any).spotifyPlayer;
-    if (!player) {
-      setError("Spotify player not ready");
-      return;
+    
+    if (playerReady && player) {
+      console.debug("Pausing via SDK player");
+      player.pause()
+        .then(() => {
+          console.debug("✓ Paused via SDK");
+          setIsPlaying(false);
+        })
+        .catch((err: any) => {
+          const errMsg = err?.message || String(err);
+          console.warn("SDK pause failed, trying REST API:", errMsg);
+          pauseViaRestAPI();
+        });
+    } else {
+      console.debug("Pausing via REST API");
+      pauseViaRestAPI();
     }
+  }, [token, playerReady]);
 
-    player.pause()
-      .then(() => {
-        console.debug("Paused");
+  const pauseViaRestAPI = () => {
+    fetch(`https://api.spotify.com/v1/me/player/pause`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        if (!response.ok && response.status !== 204) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        console.debug("✓ Paused via REST API");
         setIsPlaying(false);
       })
       .catch((err: any) => {
-        const errMsg = err?.message || String(err);
-        console.error("Pause error:", errMsg);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error("✗ REST API pause failed:", errMsg);
         setError(`Failed to pause: ${errMsg}`);
       });
-  }, [token]);
+  };
 
   const handleStop = useCallback(() => {
     handlePause();
