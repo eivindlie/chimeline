@@ -94,5 +94,10 @@ export function parseFullCardData(data: unknown): FullCardData {
 }
 
 export function parseMinimalCardData(data: unknown): MinimalCardData {
-  return MinimalCardDataSchema.parse(data);
+  // If data is a string, parse it as JSON first
+  let parsed = data;
+  if (typeof data === "string") {
+    parsed = JSON.parse(data);
+  }
+  return MinimalCardDataSchema.parse(parsed);
 }
