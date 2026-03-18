@@ -1,87 +1,122 @@
-# Welcome to React Router!
+# ChimeLine
 
-A modern, production-ready template for building full-stack React applications using React Router.
+A static React + TypeScript web app for playing songs via QR codes during a timeline-based card game.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Overview
 
-## Features
+ChimeLine has two modes:
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+1. **Scanner** — Scan QR codes to play songs silently via hidden Spotify player
+2. **Generator** — Create QR codes from single Spotify tracks or import playlists
 
-## Getting Started
+Each QR code embeds full JSON (no backend needed), making the app fully static and self-contained. Perfect for on-device play during timeline card games.
+
+## Setup
+
+### Prerequisites
+
+- Node.js v16+
+- Spotify Developer account (get [Client ID here](https://developer.spotify.com/dashboard))
+- GitHub account (for GitHub Pages hosting, optional)
 
 ### Installation
-
-Install the dependencies:
 
 ```bash
 npm install
 ```
 
+### Environment Setup
+
+Create a `.env.local` file (copy from `.env.example`):
+
+```bash
+cp .env.example .env.local
+```
+
+Then update with your Spotify credentials:
+
+```
+VITE_SPOTIFY_CLIENT_ID=your_client_id_here
+VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173/chimeline/callback
+```
+
 ### Development
 
-Start the development server with HMR:
+Start the dev server:
 
 ```bash
 npm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+The app will be available at `http://localhost:5173/chimeline/`.
 
 ## Building for Production
 
-Create a production build:
+Create an optimized build:
 
 ```bash
 npm run build
 ```
 
-## Deployment
+Output goes to `dist/`. This is a fully static SPA (no server runtime needed).
 
-### Docker Deployment
+## Deployment to GitHub Pages
 
-To build and run using Docker:
+1. Update your Spotify app settings:
+   - Redirect URI: `https://yourusername.github.io/chimeline/callback`
 
-```bash
-docker build -t my-app .
+2. Build and deploy:
 
-# Run the container
-docker run -p 3000:3000 my-app
+   ```bash
+   npm run build
+   ```
+
+3. Push `dist/` to GitHub Pages (via `gh-pages` package or manual upload).
+
+## Later: Custom Domain Setup
+
+When moving to `chimeline.prograd.no`:
+- Update `vite.config.ts`: `base: "/"` (remove `/chimeline/` prefix)
+- Update `.env.local`: `VITE_SPOTIFY_REDIRECT_URI=https://chimeline.prograd.no/callback`
+
+## Tech Stack
+
+- **React Router** (Framework Mode, SPA)
+- **TypeScript**
+- **Vite** (build tool)
+- **TailwindCSS** (styling)
+- **Spotify Web API** (PKCE OAuth, track search, playlist fetch)
+- **html5-qrcode** (QR scanning)
+- **qrcode.react** (QR generation)
+
+## Architecture
+
+```
+app/
+├── root.tsx              # Root layout + auth state
+├── routes/
+│   ├── scanner.tsx       # QR scanner page
+│   ├── generator.tsx     # QR generator page
+│   └── callback.tsx      # Spotify OAuth callback
+└── lib/
+    ├── types.ts          # Type definitions
+    ├── constants.ts      # API endpoints, QR settings
+    ├── spotifyAuth.ts    # PKCE OAuth flow
+    ├── spotifySearch.ts  # Track search
+    ├── spotifyPlaylist.ts# Playlist import
+    ├── qrScanner.ts      # QR decoding
+    └── qrGenerator.ts    # QR encoding
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+## Key Features
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+- ✅ **No backend** — All state client-side (sessionStorage)
+- ✅ **Static hosting** — Works on GitHub Pages
+- ✅ **PKCE OAuth** — Spotify login without server
+- ✅ **Full TypeScript** — Type-safe throughout
+- ✅ **Responsive design** — Mobile-first UI
+- ✅ **Self-contained QR codes** — JSON embedded, no URL shortener
 
 ---
 
-Built with ❤️ using React Router.
+See [CLAUDE.md](CLAUDE.md) for full implementation plan and architecture details.
