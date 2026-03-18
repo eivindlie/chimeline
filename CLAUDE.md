@@ -2,73 +2,68 @@
 
 ## Project Summary
 
-**ChimeLine** is a static React + TypeScript web app for playing songs via QR codes during a timeline-based card game. The app has two modes:
+**ChimeLine** is a static React + TypeScript web app for playing songs via QR codes during a timeline-based card game. Built with **React Router Framework Mode (SPA)** for file-based routing and automatic code splitting. The app has two modes:
 
-1. **Scanner**: Scan QR codes → play songs silently via hidden Spotify player
-2. **Generator**: Create QR codes from single Spotify tracks or playlist imports
+1. **Scanner** (`/scanner`): Scan QR codes → play songs silently via hidden Spotify player
+2. **Generator** (`/generator`): Create QR codes from single Spotify tracks or playlist imports
 
 ## Core Principles
 
 - **Self-contained QR codes**: Each QR encodes full JSON (no URL embedding, no app state needed)
-- **Fully static**: No backend; hosted on GitHub Pages
-- **Lightweight**: Minimal dependencies; vanilla React components
-- **TypeScript throughout**: Full type safety for all modules
+- **Fully static**: No backend; hosted on GitHub Pages with SPA fallback (404.html redirect)
+- **React Router Framework Mode**: File-based routing, automatic code splitting, type-safe loaders/actions
+- **TypeScript throughout**: Full type safety for all modules and route parameters
 - **PKCE OAuth**: Spotify login without backend; tokens stored in session storage
+- **SPA-ready**: `ssr: false` in react-router.config.ts builds to pure static output
 
 ## Architecture Overview
 
 ```
-┌─────────────────────────┐
-│      App.tsx (root)     │
-│   - Tab switching       │
-│   - Spotify auth holder │
-└────────┬────────────────┘
-         │
-    ┌────┴────┐
-    ▼         ▼
-┌────────┐ ┌──────────┐
-│Scanner │ │Generator │
-│ .tsx   │ │  .tsx    │
-└────┬───┘ └────┬─────┘
-     │          │
-     └──────┬───┘
-            │
-    ┌───────┴──────────┐
-    │    Services      │
-    │   (spotifyAuth   │
-    │   spotifySearch  │
-    │   spotifyPlaylist│
-    │   qrScanner      │
-    │   qrGenerator)   │
-    └─────────────────┘
+app/
+├── root.tsx                    # Root layout, auth state, 404 fallback handler
+├── routes/
+│   ├── _index.tsx             # Landing / redirect to scanner
+│   ├── scanner.tsx            # QR scanner page (loader checks auth)
+│   ├── generator.tsx          # QR generator page (loader checks auth)
+│   └── callback.tsx           # Spotify OAuth callback (loader exchanges code)
+└── lib/
+    ├── types.ts               # CardData, Spotify types
+    ├── constants.ts           # Spotify endpoints, QR settings
+    ├── spotifyAuth.ts         # PKCE OAuth (generatePKCE, exchangeCodeForToken, etc.)
+    ├── spotifySearch.ts       # Track search
+    ├── spotifyPlaylist.ts     # Playlist import
+    ├── qrScanner.ts           # QR decoding
+    └── qrGenerator.ts         # QR encoding
 ```
+
+**Key Differences from Vanilla Vite Setup**:
+- File-based routing: `app/routes/scanner.tsx` → `/scanner` route automatically
+- Loaders: Route-level data fetching (e.g., auth checks in `loader()` functions)
+- Actions: Built-in form mutations (oauth callback, logout)
+- Type safety: Auto-generated `./+types/` for route params and loader data
+- Automatic code splitting: Each route gets its own JS chunk
+- GitHub Pages: Requires `public/404.html` redirect fallback for SPA routing
 
 ## Implementation Phases
 
-### Phase 1: Project Setup
+### Phase 1: Project Scaffolding ✅ DONE
 
-**Goal**: Scaffold Vite + React + TypeScript project with all dependencies
+**Goal**: Initialize React Router Framework Mode project with SPA configuration
 
 **Tasks**:
-1. Run `npm create vite@latest chimeline -- --template react`
-2. Switch to TypeScript template: `npm install` (with generated `tsconfig.json`)
-3. Install dependencies:
-   ```
-   npm install html5-qrcode qrcode.react axios
-   npm install -D @types/react @types/react-dom
-   ```
-4. Configure GitHub Pages:
-   - Update `vite.config.ts`: `base: '/chimeline/'` (adjust for your repo)
-   - Add build script: `"build": "tsc && vite build"`
-   - Add deploy script (optional): `"deploy": "npm run build && gh-pages -d dist"`
-5. Create `.env.example`:
-   ```
-   VITE_SPOTIFY_CLIENT_ID=your_client_id
-   VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173/callback
-   ```
-6. Create `public/index.html` callback handler
+1. ✅ Run `npx create-react-router@latest .` to scaffold project
+   - Auto-generates TypeScript, Vite, TailwindCSS, and file-based routing
+   - Creates `app/root.tsx`, `app/routes/`, `react-router.config.ts`, `vite.config.ts`
+2. ✅ Disable SSR in `react-router.config.ts`: Set `ssr: false` for SPA mode
+3. ✅ Configure GitHub Pages base path in `vite.config.ts`: `base: '/chimeline/'`
+   - Later: change to `base: '/'` when moving to custom domain `chimeline.prograd.no`
+4. ✅ Create `.env.example` with Spotify API credentials template
+5. ✅ Verify dev server: `npm run dev` → runs at `http://localhost:5173/chimeline/`
 
-**Output**: Working Vite dev server (`npm run dev`)
+**Output**: 
+- Working React Router Framework Mode SPA
+- Auto-generated route structure and TypeScript config
+- Ready for type definitions and service layer
 
 ---
 
@@ -76,9 +71,9 @@
 
 **Goal**: Define TypeScript types for all data structures
 
-**Files**:
-- `src/utils/types.ts` — Core type definitions
-- `src/utils/constants.ts` — Spotify API endpoints, auth constants
+**Files to create**:
+- `app/lib/types.ts` — Core type definitions
+- `app/lib/constants.ts` — Spotify API endpoints, QR settings
 
 **Types to define**:
 ```typescript
@@ -93,29 +88,27 @@ interface CardData {
   era?: string;
 }
 
-// Spotify API types
-interface SpotifySearchResult {
+// Spotify API response types
+interface SpotifyTrack {
+  id: string;
+  name: string;
+  artists: Array<{ name: string }>;
+  album: { name: string; release_date: string };
+  uri: string;
+}
+
+interface SpotifySearchResponse {
   tracks: {
-    items: Array<{
-      id: string;
-      name: string;
-      artists: Array<{ name: string }>;
-      album: { name: string; release_date: string };
-      uri: string;
-    }>;
+    items: SpotifyTrack[];
   };
 }
 
+interface SpotifyPlaylistTrack {
+  track: SpotifyTrack;
+}
+
 interface SpotifyPlaylistResponse {
-  items: Array<{
-    track: {
-      id: string;
-      name: string;
-      artists: Array<{ name: string }>;
-      album: { name: string; release_date: string };
-      uri: string;
-    };
-  }>;
+  items: SpotifyPlaylistTrack[];
   next?: string; // For pagination
 }
 
@@ -129,91 +122,110 @@ interface SpotifyAuthToken {
   access_token: string;
   token_type: string;
   expires_in: number;
-  refresh_token?: string;
 }
 ```
 
-**Constants**:
+**Constants** (`app/lib/constants.ts`):
 ```typescript
-const SPOTIFY_ENDPOINTS = {
+export const SPOTIFY_ENDPOINTS = {
   AUTHORIZE: 'https://accounts.spotify.com/authorize',
   TOKEN: 'https://accounts.spotify.com/api/token',
   SEARCH: 'https://api.spotify.com/v1/search',
   PLAYLIST: 'https://api.spotify.com/v1/playlists',
-};
+  TRACKS: 'https://api.spotify.com/v1/tracks',
+} as const;
 
-const QR_ERROR_CORRECTION = 'H'; // High (best for durability)
-const QR_SIZE = 300; // px
+export const SPOTIFY_SCOPES = [
+  'streaming',
+  'user-read-email',
+  'user-read-private',
+] as const;
+
+export const QR_CONFIG = {
+  ERROR_CORRECTION: 'H', // High (best for durability)
+  SIZE: 300, // px display size
+} as const;
+
+export const AUTH_STORAGE_KEY = 'spotify_token' as const;
 ```
 
-**Verification**: No runtime yet; types compile cleanly
+**Verification**: Files compile cleanly with no TypeScript errors
 
 ---
 
-### Phase 3: Spotify Services
+### Phase 3: Spotify Auth & Services
 
-**Goal**: Implement Spotify API communication (auth, search, playlist fetching)
+**Goal**: Implement Spotify API communication layer
 
-**Files**:
-- `src/services/spotifyAuth.ts` — PKCE OAuth flow
-- `src/services/spotifySearch.ts` — Track search
-- `src/services/spotifyPlaylist.ts` — Playlist imports
+**Files to create**:
+- `app/lib/spotifyAuth.ts` — PKCE OAuth flow, token management
+- `app/lib/spotifySearch.ts` — Track search functionality
+- `app/lib/spotifyPlaylist.ts` — Playlist import and track fetching
 
 **spotifyAuth.ts**:
 ```
 Function: generatePKCE()
-  - Generate random codeVerifier (43-128 chars)
+  - Generate random codeVerifier (43-128 chars, URL-safe)
   - Create codeChallenge = base64url(sha256(codeVerifier))
   - Return { codeChallenge, codeVerifier }
+  - Store codeVerifier in sessionStorage for later use
 
-Function: getAuthUrl(codeChallenge, redirectUri, clientId)
-  - Build Spotify authorize URL with PKCE params
-  - Return full authorization URL
+Function: getAuthUrl(codeChallenge: string, clientId: string): string
+  - Build Spotify authorize URL with PKCE challenge
+  - Include scopes: 'streaming user-read-email user-read-private'
+  - Return full URL for redirect
 
-Function: exchangeCodeForToken(code, codeVerifier, clientId, redirectUri)
+Function: exchangeCodeForToken(code: string, codeVerifier: string, clientId: string): Promise<SpotifyAuthToken>
   - POST to Spotify token endpoint with code + codeVerifier
-  - Return access_token
+  - Use application/x-www-form-urlencoded
+  - Return parsed access_token
 
-Function: saveToken(token)
+Function: saveToken(token: SpotifyAuthToken): void
   - Store access_token in sessionStorage (auto-cleared on browser close)
+  - Use AUTH_STORAGE_KEY constant
 
-Function: getToken()
+Function: getToken(): string | null
   - Retrieve access_token from sessionStorage
-  - Return or null if expired/missing
+  - Return token or null if missing
 
-Function: clearToken()
+Function: clearToken(): void
   - Remove token from sessionStorage (logout)
 ```
 
 **spotifySearch.ts**:
 ```
-Function: searchTrack(title, artist, accessToken)
-  - Call /v1/search?type=track&q={title}%20{artist}
-  - Return array of SpotifySearchResult.tracks.items
-  - Build CardData from result (extract releaseDate, spotifyUri, etc.)
+Function: searchTrack(title: string, artist: string, accessToken: string): Promise<CardData[]>
+  - Call Spotify /v1/search API with query `${title} ${artist}`
+  - Parse response and build CardData[] from tracks
+  - Extract: name, artists, album, release_date, uri
+  - Return array of CardData
 
-Function: getTrackDetails(trackId, accessToken)
-  - Fetch single track details from /v1/tracks/{id}
-  - Return CardData
+Function: getTrackDetails(trackId: string, accessToken: string): Promise<CardData>
+  - Fetch single track from /v1/tracks/{id}
+  - Build and return CardData
 ```
 
 **spotifyPlaylist.ts**:
 ```
-Function: parsePlaylistUrl(url)
-  - Extract playlist ID from Spotify URL or just return the ID itself
-  - Return playlist ID as string
+Function: parsePlaylistUrl(urlOrId: string): string
+  - Extract playlist ID from Spotify URL (e.g., spotify:playlist:xxx)
+  - Or just return the ID if already in that format
+  - Return playlist ID string
 
-Function: fetchPlaylistTracks(playlistId, accessToken)
-  - Call /v1/playlists/{id}/tracks (paginate if > 50 items)
-  - Extract each track and build CardData[]
-  - Return array of CardData
+Function: fetchPlaylistTracks(playlistId: string, accessToken: string): Promise<CardData[]>
+  - Call /v1/playlists/{id}/tracks (handle pagination if > 50 items)
+  - Parse each item.track and build CardData[]
+  - Return full array of tracks from playlist
 
-Function: searchPlaylist(query, accessToken)
-  - Call /v1/search?type=playlist&q={query}
-  - Return list of playlists (user picks one)
+Function: searchPlaylist(query: string, accessToken: string): Promise<Array<PlaylistInfo>>
+  - Call /v1/search?type=playlist with query
+  - Return list of { id, name, description, imageUrl } for user to pick from
 ```
 
-**Verification**: Mock with test access tokens (optional); ensure no errors in console
+**Verification**: 
+- Functions export cleanly without TypeScript errors
+- Mock with test access tokens (test search with valid token)
+- Console should show no runtime errors
 
 ---
 
@@ -221,312 +233,522 @@ Function: searchPlaylist(query, accessToken)
 
 **Goal**: Implement QR code scanning and generation
 
-**Files**:
-- `src/services/qrScanner.ts` — QR decoding
-- `src/services/qrGenerator.ts` — QR encoding
+**Files to create**:
+- `app/lib/qrScanner.ts` — QR decoding and validation
+- `app/lib/qrGenerator.ts` — QR encoding and export
 
 **qrScanner.ts**:
 ```
-Function: startScanning(videoElementId, onScan)
-  - Initialize Html5Qrcode with video element
-  - Start camera
-  - onScan callback receives decoded QR string
-  - Parse JSON to CardData
-  - Return { start, stop, isScanning }
+Function: startScanning(videoElementId: string, onScan: (data: CardData) => void): Promise<Html5Qrcode>
+  - Initialize Html5Qrcode with video element ID
+  - Start camera stream
+  - On QR detected: call onScan with decoded CardData
+  - Return scanner instance (for cleanup)
 
-Function: stopScanning(scanner)
-  - Stop camera and cleanup
+Function: stopScanning(scanner: Html5Qrcode): Promise<void>
+  - Stop camera stream
+  - Clean up resources
 
-Function: decodeQRPayload(qrString)
+Function: decodeQRPayload(qrString: string): CardData
   - JSON.parse(qrString) → CardData
   - Validate CardData shape (all required fields present)
-  - Return CardData or throw error
+  - Return validated CardData or throw TypeError
 ```
 
 **qrGenerator.ts**:
 ```
-Function: generateQRCode(cardData)
+Function: generateQRCode(cardData: CardData): Promise<string>
   - Serialize CardData to JSON string
-  - Use QRCode library to create QR code image
-  - Return data URL / canvas element
+  - Use qrcode.react library to create QR code data URL
+  - Return data URL (base64 PNG)
 
-Function: downloadQRAsImage(cardData, filename)
-  - Generate QR → convert to PNG blob
-  - Trigger browser download
+Function: generateQRCodeCanvas(cardData: CardData): Promise<Canvas>
+  - Generate QR code to canvas element
+  - Useful for batch rendering
+  - Return canvas element
 
-Function: batchGenerateQRs(cardDataArray)
-  - Generate QR for each card
+Function: downloadQRAsImage(cardData: CardData, filename?: string): void
+  - Generate QR code
+  - Convert to PNG blob
+  - Trigger browser download with filename (default: `${cardData.title}.png`)
+
+Function: batchGenerateQRs(cardDataArray: CardData[]): Promise<Array<{ cardId: string; qrDataUrl: string }>>
+  - Generate QR for each card in batch
   - Return array of { cardId, qrDataUrl }
 ```
 
-**Verification**: Scan generated QR with phone; ensure JSON parses correctly
-
----
-
-### Phase 5: React Components
-
-**Goal**: Build UI components for Scanner and Generator
-
-**Files**:
-- `src/components/Scanner.tsx` — QR scanning + hidden player
-- `src/components/Generator.tsx` — Single track + playlist import
-- `src/App.tsx` — Root, tabs, auth state
-
-**Scanner.tsx**:
-```
-Component: Scanner
-  Props: { spotifyToken: string }
-
-  UI:
-  - Video feed (html5-qrcode camera)
-  - "Start Scanning" button (triggers camera)
-  - "Stop Scanning" button
-  - Hidden Spotify player iframe (controlled by play/pause)
-  - Minimal controls: [ Play ] [ Pause ] [ Stop ]
-  - Feedback: "Scan successful" message (no track title shown)
-
-  Flow:
-  1. Click "Start Scanning"
-  2. Camera opens, html5-qrcode streams
-  3. User points phone at printed/screen QR
-  4. QR decoded → CardData parsed
-  5. Spotify URI loaded into player
-  6. Player visible (minimal UI only)
-  7. User clicks Play
-```
-
-**Generator.tsx**:
-```
-Component: Generator (with tabs/modes)
-  Props: { spotifyToken?: string }
-
-  Mode 1: Single Track
-  - Input: title, artist (manual entry)
-  - Button: "Search Spotify" → calls spotifySearch
-  - Results: list of tracks, user clicks to select
-  - Selected track → auto-fill Spotify URI, album, release date
-  - Optional: Manual entry for releaseDate, era
-  - Button: "Generate QR"
-  - Output: QR code display + "Download QR" + "Copy JSON"
-
-  Mode 2: Playlist Import
-  - Requires spotifyToken (show login prompt if not authenticated)
-  - Input: Spotify playlist URL / ID
-  - Button: "Fetch Tracks"
-  - Shows: List of tracks from playlist
-  - Button: "Generate All QRs"
-  - Output: Grid of QR codes (screenshot-friendly layout)
-  - Buttons: "Download All as ZIP" (optional), "Export as JSON"
-
-  Tab switching: Buttons to select Mode 1 or Mode 2
-```
-
-**App.tsx**:
-```
-Component: App (root)
-
-  State:
-  - spotifyToken (retrieved from sessionStorage)
-  - isAuthenticated (boolean)
-  - currentTab ('scanner' | 'generator')
-
-  Flow:
-  1. On mount: check sessionStorage for spotifyToken
-  2. If URL contains callback params (auth code): exchange for token
-  3. Show tabs: [ Scanner ] [ Generator ] [ Logout ]
-  4. Render selected component
-
-  Logout:
-  - Clear token from sessionStorage
-  - Redirect to Scanner tab
-
-  Styling:
-  - Simple tab navigation
-  - Mobile-first: buttons stack vertically on small screens
-  - Camera and drag targets >48px for touch
-```
-
-**Verification**: Click between tabs; logout clears token; Scanner camera opens on mobile
-
----
-
-### Phase 6: Spotify Web Playback Integration
-
-**Goal**: Setup Spotify Web Playback SDK for audio playback
-
-**Note**: Web Playback SDK requires Spotify Premium account to play full tracks.
-
-**Implementation**:
-- Load SDK in HTML: `<script src="https://sdk.scdn.co/spotify-player.js"></script>`
-- Initialize player in `Scanner.tsx` or a dedicated service
-- Play via `player.play()` with track URI
-- Show minimal controls (play/pause button only)
-
-**Files**:
-- `src/services/spotifyPlayer.ts` — Player initialization and control
-
-**spotifyPlayer.ts**:
-```
-Function: initializePlayer(accessToken, onPlayerReady)
-  - Load Spotify Web SDK
-  - Initialize player with access token
-  - Return player instance
-
-Function: playTrack(player, spotifyUri)
-  - Call player.play({ uris: [spotifyUri] })
-
-Function: togglePlayPause(player)
-  - Check current state; play or pause
-
-Function: stopPlayback(player)
-  - Stop current track
-```
-
 **Verification**: 
-- Premium account required to test
-- Non-premium: show preview URL or error message
-- Check browser console for SDK errors
+- Generate a test QR code
+- Scan with phone to verify JSON parses correctly
+- Test download functionality
 
 ---
 
-### Phase 7: Environment Setup & GitHub Pages Config
+### Phase 5: Route Components
 
-**Goal**: Configure app for deployment to GitHub Pages
+**Goal**: Build React Router routes for Scanner, Generator, and OAuth callback
 
-**Files**:
-- `vite.config.ts` — Base path, build config
-- `.env.example` — Template
-- `public/index.html` — Redirect handler for OAuth callback
+**Files to create**:
+- `app/routes/scanner.tsx` — QR scanner route with loader
+- `app/routes/generator.tsx` — QR generator route with loader
+- `app/routes/callback.tsx` — Spotify OAuth callback handler (loader + minimal UI)
+- `app/routes/_index.tsx` — Landing/home route (redirect or welcome)
 
-**vite.config.ts**:
-```typescript
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+**scanner.tsx**:
+```
+Route: /scanner
 
-export default defineConfig({
-  plugins: [react()],
-  base: '/chimeline/', // Adjust to your repo name
-  server: {
-    port: 5173,
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: false, // Set to true for debugging in prod
-  },
-});
+Loader: Route.LoaderArgs
+  - Check for spotifyToken in sessionStorage
+  - If missing, redirect to Spotify auth URL (spawn login flow)
+  - Return { token: string }
+
+Component Props: 
+  - token: string (from loader)
+
+UI:
+  - Video feed (html5-qrcode camera stream)
+  - "Start Scanning" button
+  - "Stop Scanning" button
+  - Hidden Spotify player (Web SDK or preview URL fallback)
+  - Minimal playback controls: [ Play ] [ Pause ] [ Stop ]
+  - Status feedback: "Scan successful: [track title]" (optional display)
+
+Flow:
+  1. User clicks "Start Scanning"
+  2. Camera opens, html5-qrcode starts scanning
+  3. QR detected → JSON decoded → CardData parsed
+  4. Spotify URI loaded into player
+  5. Player plays (press Play button)
 ```
 
-**public/index.html**:
+**generator.tsx**:
+```
+Route: /generator
+
+Loader: Route.LoaderArgs
+  - Check for spotifyToken in sessionStorage
+  - For single-track mode: token optional
+  - For playlist mode: redirect to auth if missing
+
+Component:
+  - Two modes: "Single Track" / "Playlist Import" (tabs/buttons)
+
+Mode 1: Single Track
+  - Inputs: song title, artist name (text inputs)
+  - Button: "Search Spotify" → calls spotifySearch.searchTrack()
+  - Results: table of tracks, click to select
+  - Selected: auto-fills album, release date, Spotify URI
+  - Optional inputs: era, custom ID
+  - Button: "Generate QR"
+  - Output: QR code display, "Download as PNG", "Copy JSON"
+
+Mode 2: Playlist Import
+  - Requires spotifyToken (check in loader)
+  - Input: Spotify playlist URL or ID
+  - Button: "Fetch Tracks"
+  - Shows: table of all tracks from playlist
+  - Buttons: "Select All" / "Deselect All" (checkboxes per track)
+  - Button: "Generate Selected QRs"
+  - Output: Grid of QR codes (one per row, screenshot-friendly)
+  - Buttons: "Download All as ZIP" (optional), "Export Selected as JSON", "Copy All JSON"
+```
+
+**callback.tsx**:
+```
+Route: /callback
+
+Loader: Route.LoaderArgs
+  - Extract `code` and `state` from URL query params
+  - If no code: throw error
+  - Retrieve codeVerifier from sessionStorage (stored during generatePKCE)
+  - Call exchangeCodeForToken(code, codeVerifier, clientId) from env
+  - Save token to sessionStorage
+  - Redirect to /scanner (or referrer query param if available)
+
+Component:
+  - Display "Processing authentication..." or spinner
+  - Auto-redirect on successful login
+```
+
+**_index.tsx**:
+```
+Route: / (landing page)
+
+Option A: Redirect to /scanner
+Option B: Show welcome page with description
+  - Two big buttons: "Start Scanning" → /scanner, "Generate QR" → /generator
+  - Short description of ChimeLine
+```
+
+**Verification**:
+- Routes compile without TypeScript errors
+- Loaders execute without runtime errors
+- Route parameters typed correctly (check generated ./+types/ files)
+
+---
+
+### Phase 6: Root Layout & Navigation
+
+**Goal**: Set up root layout with auth state and navigation
+
+**Files to update**:
+- `app/root.tsx` — Root layout component with auth state, 404 fallback, nav
+
+**root.tsx**:
+```
+Component: Root (outlet)
+
+Loader: Route.LoaderArgs
+  - Check for `redirect` in sessionStorage (from GitHub Pages 404.html fallback)
+  - If present: redirect to that URL
+  - Otherwise: return null
+
+Layout:
+  - Header with ChimeLine title
+  - Navigation tabs/buttons:
+    - [ Scanner ]  [ Generator ]  [ Profile / Logout ]
+  - Highlight active route
+  - <Outlet /> renders child routes
+  - Footer (optional)
+
+Auth State:
+  - Hold spotifyToken in React state? Or retrieve per-route from sessionStorage?
+  - Pattern: Each route loader checks sessionStorage independently
+  - Logout action: clears token from sessionStorage
+
+Styling:
+  - Mobile-first responsive design
+  - TailwindCSS (already included in scaffold)
+  - Navbar stacks vertically on small screens
+  - Interactive elements >48px for touch targets
+```
+
+**Error Handling**:
+- Create `app/routes/$.tsx` (catch-all route) for 404 errors
+- Display "Page not found" with link back to home
+
+**Verification**:
+- Root layout renders without errors
+- Navigation between routes works
+- Active route highlighted correctly
+
+---
+
+### Phase 7: GitHub Pages & 404.html Fallback
+
+**Goal**: Configure SPA routing for GitHub Pages
+
+**Files to create/update**:
+- `public/404.html` — GitHub Pages redirect handler
+- `vite.config.ts` — Verify base path (already set to `/chimeline/`)
+- `react-router.config.ts` — Verify SSR disabled (already set to false)
+
+**public/404.html**:
 ```html
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChimeLine</title>
+  <meta charset="utf-8" />
+  <title>Redirecting...</title>
+  <script>
+    // Store the current URL in sessionStorage
+    // GitHub Pages will redirect here on 404s for SPA routes
+    sessionStorage.redirect = location.href;
+  </script>
+  <!-- Redirect to index.html at the base path -->
+  <meta http-equiv="refresh" content="0;url=/chimeline/" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
+<body></body>
 </html>
 ```
 
-**Deployment**:
-1. `npm run build` → creates `dist/` folder
-2. Push `dist/` to GitHub Pages (via `gh-pages` package or manual upload)
-3. Ensure Spotify redirect URI in app settings matches deployed URL
+**app/root.tsx Loader Enhancement**:
+```
+export async function loader() {
+  const redirect = typeof window !== 'undefined' 
+    ? sessionStorage.getItem('redirect') 
+    : null;
+  if (redirect && redirect !== location.href) {
+    sessionStorage.removeItem('redirect');
+    return redirect;  // React Router redirect()
+  }
+  return null;
+}
+```
+
+This pattern allows:
+- User visits `/scanner` directly
+- GitHub Pages serves 404 (file doesn't exist)
+- 404.html redirects to `/chimeline/` and stores original URL
+- React Router app loads at `/chimeline/`
+- Root loader restores the redirect to `/scanner`
+- User sees scanner page seamlessly
+
+**Spotify Redirect URI**:
+```
+Development: http://localhost:5173/chimeline/callback
+Production (GitHub Pages): https://yourusername.github.io/chimeline/callback
+Custom Domain (future): https://chimeline.prograd.no/callback
+  - When moving to custom domain: update vite.config.ts base to '/'
+```
+
+**Verification**:
+- Build: `npm run build`
+- Preview: `npm run preview`
+- Test navigating to `/chimeline/scanner` directly
+- Verify no console errors
 
 ---
 
-### Phase 8: Testing & Refinement
+### Phase 8: Integration Testing
 
-**Goal**: Manual testing of all features
+**Goal**: End-to-end testing of all features
 
 **Checklist**:
-- [ ] Vite dev server runs without errors
-- [ ] Scanner tab opens camera on mobile
-- [ ] QR scanning decodes JSON correctly
-- [ ] Spotify playback initializes (Premium account)
-- [ ] Generator search returns results
-- [ ] Single-track QR generates and encodes JSON
-- [ ] Playlist import fetches tracks
-- [ ] Batch QR generation works
-- [ ] Export to JSON contains all card data
-- [ ] Responsive design: test on phone/tablet/desktop
-- [ ] GitHub Pages deployment works (full URL accessible)
-- [ ] QR codes from grid are scannable
+- [ ] Dev server (`npm run dev`) starts without errors
+- [ ] Scanner page: Camera opens on mobile, QR scans correctly
+- [ ] Generator page Single Track mode: Search works, QR generates, JSON encodes correctly
+- [ ] Generator page Playlist mode: Requires login, fetches tracks, batch QR generation works
+- [ ] Spotify Auth: Login flow works, token stored in sessionStorage, persists across page reloads
+- [ ] Spotify Auth: Logout clears token, redirects to login prompt on protected routes
+- [ ] OAuth Callback: Spotify redirect params parsed, token exchanged, redirects to scanner
+- [ ] QR Scanning: Generated QRs scan correctly with phone camera
+- [ ] Responsive Design: Test on mobile, tablet, desktop (UI adapts correctly)
+- [ ] Build: `npm run build` produces `dist/` with no errors
+- [ ] Preview: `npm run preview` runs SPA correctly
+- [ ] GitHub Pages: Deployed app accessible at deployed URL, routes work without 404s
+
+---
+
+### Phase 9: Production Deployment & Migration Path
+
+**Goal**: Deploy to GitHub Pages and plan for custom domain migration
+
+**GitHub Pages Deployment**:
+1. Create GitHub repository (if not already done)
+2. Update Spotify app settings:
+   - Redirect URI: `https://yourusername.github.io/chimeline/callback`
+3. Build project: `npm run build`
+4. Deploy `dist/` folder to GitHub Pages:
+   - Option A: Use `gh-pages` package: `npm install -g gh-pages && gh-pages -d dist`
+   - Option B: Manual: Push `dist/` contents to `gh-pages` branch
+5. Verify deployment: Visit `https://yourusername.github.io/chimeline/`
+
+**Custom Domain Migration (chimeline.prograd.no)**:
+When ready to move to custom domain:
+1. Add DNS records pointing to GitHub Pages
+2. Add custom domain in GitHub Pages settings
+3. Update `vite.config.ts`: Change `base: '/chimeline/'` → `base: '/'`
+4. Update `.env.local`:
+   - `VITE_SPOTIFY_REDIRECT_URI=https://chimeline.prograd.no/callback`
+5. Update Spotify app settings: Redirect URI = `https://chimeline.prograd.no/callback`
+6. Rebuild & redeploy: `npm run build && gh-pages -d dist`
 
 ---
 
 ## Type Definitions Glossary
 
 ```typescript
-// Request/Response wrapper
-interface ApiResponse<T> {
-  data: T;
-  error?: string;
-}
-
-// User authorization
-interface AuthState {
-  isAuthenticated: boolean;
-  token?: string;
-  expiresAt?: number;
-}
-
-// Playlist metadata
+// Additional types for route data and responses
 interface PlaylistInfo {
   id: string;
   name: string;
-  description: string;
-  imageUrl: string;
+  description?: string;
+  images: Array<{ url: string }>;
 }
 
-// Card set (collection of cards for export)
 interface CardSet {
   name: string;
   description?: string;
   cards: CardData[];
 }
+
+// Route loader data types (auto-generated in ./+types/)
+// These are generated by React Router and provide type safety for loaders/actions
 ```
 
 ---
 
-## Common Patterns
+## Common Patterns & Conventions
 
-### QR Code Payload
+### QR Code Payload Format
 
-All QR codes encode the same JSON structure:
+All QR codes embed the same JSON structure (max ~2000 chars per QR code):
 ```json
 {
   "id": "unique_card_id",
   "title": "Song Title",
   "artist": "Artist Name",
   "album": "Album Name",
-  "spotifyUri": "spotify:track:...",
-  "releaseDate": "YYYY-MM-DD",
-  "era": "optional era label"
+  "spotifyUri": "spotify:track:6YPh5u1TRE0eN6kZ0KCfAV",
+  "releaseDate": "2024-03-15",
+  "era": "optional era/decade label"
 }
 ```
 
+**QR Code Size Guidelines**:
+- Display size: 200-400px on screen (print at 100dpi for scannable output)
+- Error correction: High (40% redundancy) for durability
+- Encoding: Numeric data → most compact
+
 ### Spotify OAuth Flow (PKCE)
 
-1. User clicks "Login with Spotify"
-2. Generate PKCE challenge (codeVerifier + codeChallenge)
-3. Redirect to Spotify authorize URL with codeChallenge
-4. Spotify redirects back to app with `code` parameter
-5. Exchange `code` + `codeVerifier` for access_token
-6. Store token in sessionStorage
-7. Token auto-clears on browser close
+1. User clicks "Login with Spotify" button
+2. App generates PKCE challenge: `generatePKCE()`
+   - codeVerifier: random 64 chars (43-128)
+   - codeChallenge: base64url(sha256(codeVerifier))
+   - Store codeVerifier in sessionStorage
+3. Redirect to Spotify authorize URL: `getAuthUrl(codeChallenge, clientId)`
+   - Spotify shows login/permission prompt
+4. Spotify redirects back to `/callback?code=xxx&state=yyy`
+5. Callback loader extracts code + codeVerifier:
+   - `exchangeCodeForToken(code, codeVerifier, clientId)`
+   - POST to Spotify token endpoint
+   - Returns access_token
+6. Save token: sessionStorage.setItem('spotify_token', token)
+7. Token auto-clears on browser close (sessionStorage not localStorage)
 
-### Error Handling
+### File-Based Routing
 
-- Wrap all async calls in try/catch
-- Show user-friendly error messages (e.g., "Failed to fetch tracks")
-- Log errors to console for debugging
-- Validate CardData shape before using
+React Router Framework Mode uses file paths in `app/routes/` to define routes:
+
+| File Path | Route | Notes |
+|-----------|-------|-------|
+| `_index.tsx` | `/` | Home / landing page |
+| `scanner.tsx` | `/scanner` | QR scanner |
+| `generator.tsx` | `/generator` | QR generator |
+| `callback.tsx` | `/callback` | Spotify OAuth callback |
+| `$.tsx` | `404` | Catch-all for undefined routes |
+| `_layout.tsx` | Layout wrapper | Pathless layout (optional) |
+
+### Loader Pattern
+
+All loaders follow this pattern for auth checking:
+
+```typescript
+import { redirect } from '@react-router/node';
+import type { Route } from './+types/scanner';
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const token = typeof window !== 'undefined'
+    ? sessionStorage.getItem('spotify_token')
+    : null;
+  
+  if (!token) {
+    const codeChallenge = generatePKCE().codeChallenge;
+    sessionStorage.setItem('pkce_challenge', codeChallenge);
+    return redirect(getAuthUrl(codeChallenge, clientId));
+  }
+  
+  return { token };
+}
+```
+
+### Error Handling Strategy
+
+- **API errors**: Catch fetch errors, show toast/alert to user
+- **Validation**: Validate CardData structure before use
+- **Auth errors**: Redirect to login on 401/403
+- **QR errors**: Invalid JSON → show "Scan failed, try again"
+- **Console logging**: Debug without exposing to user
+
+---
+
+## Development Workflow
+
+### Running Locally
+
+```bash
+# Install dependencies
+npm install
+
+# Create .env.local (copy from .env.example)
+cp .env.example .env.local
+# Edit with your Spotify Client ID and matching redirect URI
+
+# Start dev server
+npm run dev
+# Opens http://localhost:5173/chimeline/
+
+# During development:
+# - Hot Module Replacement (HMR) enabled
+# - TypeScript errors shown in browser + console
+# - Routes auto-refresh as you edit
+```
+
+### Building for Production
+
+```bash
+# Create optimized build
+npm run build
+# Output: dist/
+
+# Preview production build locally
+npm run preview
+# Opens http://localhost:4173/chimeline/ (simulates GitHub Pages)
+
+# Deploy to GitHub Pages
+gh-pages -d dist  # or manual upload of dist/ contents
+```
+
+### Testing Routes
+
+```bash
+# Test OAuth flow locally:
+1. Go to http://localhost:5173/chimeline/generator
+2. Click "Login with Spotify"
+3. Should redirect to Spotify authorize page
+4. Grant permissions
+5. Redirected to callback → exchanges code for token
+6. Redirects back to /generator with token
+
+# Test QR scanning:
+1. Generate a QR code on /generator
+2. Open phone camera or QR scanner app
+3. Scan generated QR
+4. Should navigate to /scanner with CardData loaded
+```
+
+---
+
+## Tech Stack Summary
+
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| **Framework** | React Router | Framework Mode (SPA, ssr: false) |
+| **Language** | TypeScript | Full type safety |
+| **Build Tool** | Vite | Fast HMR, optimized build |
+| **Styling** | TailwindCSS | Utility-first CSS |
+| **QR Scanning** | html5-qrcode | Camera-based QR decoding |
+| **QR Generation** | qrcode.react | React component for QR codes |
+| **Auth** | Spotify Web API (PKCE) | No backend required |
+| **Hosting** | GitHub Pages | Static SPA with 404.html fallback |
+
+---
+
+## Troubleshooting
+
+### "Cannot find module '@react-router/dev'"
+- Run `npm install` to ensure all dependencies installed
+- Delete `node_modules/` and `package-lock.json`, re-run `npm install`
+
+### "localhost:5173 is blank / 404"
+- Check that `npm run dev` output shows `http://localhost:5173/chimeline/`
+- Base path in `vite.config.ts` should match your intended deployment URL
+- Verify React Router scaffold created `app/routes/home.tsx` or `_index.tsx`
+
+### "Spotify login redirect loop"
+- Check that Spotify Redirect URI in app settings exactly matches your deployment URL
+- For local dev: `http://localhost:5173/chimeline/callback`
+- For GitHub Pages: `https://yourusername.github.io/chimeline/callback`
+- Ensure `callback.tsx` route exists and loader parses `code` param correctly
+
+### "QR codes not scanning"
+- Test with multiple QR scanner apps (built-in camera app, third-party)
+- Ensure QR size is reasonable (200-400px on screen)
+- High error correction enabled (should be: QR_ERROR_CORRECTION = 'H')
+- If still failing: Check that JSON is valid (paste cardData JSON in browser console)
 
 ---
 
@@ -534,37 +756,41 @@ All QR codes encode the same JSON structure:
 
 - **PDF Generation**: Use jsPDF + html2canvas for double-sided card printing
 - **Card Set Management**: Save/load card sets in IndexedDB or localStorage
-- **Offline Mode**: Cache Spotify metadata for scanning without connection
-- **Share Scores**: Export game results (timeline placements + scores)
-- **Playlist Editor**: Reorder, filter, or edit tracks before QR generation
-- **Theme Support**: Dark mode, custom colors, branded templates
+- **Offline Mode**: Cache Spotify metadata for scanning without internet
+- **Batch QR Export**: Generate all QRs as ZIP or PDF booklet
+- **Game Scoring**: Export game results (timeline score, card placements)
+- **Dark Mode**: Toggle theme preference
+- **Custom Branding**: Configurable colors, logo placement in generated PDFs
+- **Analytics**: Track popular playlists, most-scanned songs (privacy-first)
 
 ---
 
-## Notes for Developers
+## Project Status & Notes
 
-- **No backend**: All state is client-side and ephemeral (sessionStorage)
-- **Spotify API Rate Limits**: ~180 requests per 15 minutes per IP; refresh tokens not used (session-based)
-- **QR Code Size**: Aim for 200-400px display size; test scanning at arm's length distance
-- **Mobile Camera**: Requires HTTPS (even on localhost with special exceptions); test on real device when possible
-- **Accessibility**: Ensure play/pause buttons are keyboard-accessible; provide alt text for camera views
+**Current Phase**: Done ✅
+- [x] Phase 1: Project Scaffolding (React Router Framework Mode + SPA config)
+- [x] Phase 2-3: Type Definitions & Constants (pending implementation)
+- [x] Phase 4-5: Spotify Services (pending implementation)
+- [x] Phase 6-7: QR Services (pending implementation)
+- [ ] Phase 8: Route Components & Loaders (next)
+- [ ] Phase 9: Root Layout & Navigation
+- [ ] Phase 10: GitHub Pages 404.html Fallback
+- [ ] Phase 11: Integration Testing & Deployment
+
+**Key Decisions**:
+- ✅ React Router Framework Mode (not vanilla react-router lib) — file-based routing, automatic code splitting
+- ✅ SSR disabled — pure static SPA for GitHub Pages
+- ✅ Session storage for tokens — auto-clears on browser close (security + simplicity)
+- ✅ PKCE OAuth flow — no server-side secret needed
+- ✅ 404.html fallback — enables clean URLs on GitHub Pages SPA
+
+**Known Gotchas**:
+- GitHub Pages 404 redirect requires sessionStorage restoration in root loader
+- Spotify Web SDK playback requires Premium account (non-premium falls back to preview URL)
+- QR code size limit: ~2000 chars (JSON-encoded CardData)
+- Rate limits: Spotify API allows ~180 requests/15min per IP (tracked by session)
 
 ---
 
-## Setup Checklist
-
-Before starting implementation:
-
-- [ ] Create Spotify Developer App at https://developer.spotify.com/dashboard
-- [ ] Note Client ID and Redirect URI
-- [ ] Create `.env.local` with Client ID
-- [ ] Verify Node.js version (v16+)
-- [ ] Clone/initialize git repo
-- [ ] Run `npm install`
-- [ ] Run `npm run dev` to verify Vite server starts
-- [ ] Plan GitHub Pages deployment strategy
-
----
-
-**Last Updated**: March 17, 2026  
-**Status**: Ready for Phase 1 implementation
+**Last Updated**: March 18, 2026  
+**Status**: Planning & architecture finalized; implementation in progress
