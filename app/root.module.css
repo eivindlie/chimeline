@@ -1,0 +1,31 @@
+.root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.main {
+  flex: 1;
+  padding: 2rem;
+}
+
+.footer {
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
