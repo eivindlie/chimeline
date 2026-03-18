@@ -1,6 +1,7 @@
 const SPOTIFY_ENDPOINTS = {
   AUTHORIZE: "https://accounts.spotify.com/authorize",
   TOKEN: "https://accounts.spotify.com/api/token",
+  USER: "https://api.spotify.com/v1/me",
 } as const;
 
 const SPOTIFY_SCOPES = [
@@ -11,6 +12,7 @@ const SPOTIFY_SCOPES = [
 
 const AUTH_STORAGE_KEY = "spotify_token";
 const PKCE_VERIFIER_KEY = "spotify_pkce_verifier";
+const USER_STORAGE_KEY = "spotify_user";
 
 /**
  * Generate PKCE code challenge and verifier
@@ -150,5 +152,45 @@ export function clearToken(): void {
   if (typeof window !== "undefined") {
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
     sessionStorage.removeItem(PKCE_VERIFIER_KEY);
+    sessionStorage.removeItem(USER_STORAGE_KEY);
   }
+}
+
+/**
+ * Fetch Spotify user profile
+ */
+export async function fetchUserProfile(
+  accessToken: string
+): Promise<{ display_name: string; email: string; id: string }> {
+  const response = await fetch(SPOTIFY_ENDPOINTS.USER, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user profile: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Save user profile to session storage
+ */
+export function saveUser(user: { display_name: string; email: string; id: string }): void {
+  if (typeof window !== "undefined") {
+    sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  }
+}
+
+/**
+ * Get user profile from session storage
+ */
+export function getUser(): { display_name: string; email: string; id: string } | null {
+  if (typeof window !== "undefined") {
+    const user = sessionStorage.getItem(USER_STORAGE_KEY);
+    return user ? JSON.parse(user) : null;
+  }
+  return null;
 }

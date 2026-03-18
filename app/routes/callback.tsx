@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { exchangeCodeForToken, saveToken } from "../lib/spotifyAuth";
+import { exchangeCodeForToken, saveToken, fetchUserProfile, saveUser } from "../lib/spotifyAuth";
 
 export function meta() {
   return [{ title: "ChimeLine - Authenticating..." }];
@@ -45,6 +45,10 @@ export default function CallbackPage() {
 
         // Save token
         saveToken(access_token);
+
+        // Fetch and save user profile
+        const userProfile = await fetchUserProfile(access_token);
+        saveUser(userProfile);
 
         // Redirect to home
         navigate("/");
