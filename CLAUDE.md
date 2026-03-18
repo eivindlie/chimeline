@@ -592,22 +592,30 @@ All QR codes embed the same JSON structure (max ~2000 chars per QR code):
 - Error correction: High (40% redundancy) for durability
 - Encoding: Numeric data → most compact
 
-### Spotify OAuth Flow (PKCE)
+### Spotify OAuth Flow (PKCE + CSRF Protection)
 
 1. User clicks "Login with Spotify" button
-2. App generates PKCE challenge: `generatePKCE()`
-   - codeVerifier: random 64 chars (43-128)
+2. App generates PKCE challenge and state: `generatePKCE()` + `generateState()`
+   - codeVerifier: random 128 chars (URL-safe)
    - codeChallenge: base64url(sha256(codeVerifier))
-   - Store codeVerifier in sessionStorage
-3. Redirect to Spotify authorize URL: `getAuthUrl(codeChallenge, clientId)`
+   - state: random 64 chars for CSRF protection
+   - Store both in sessionStorage
+3. Redirect to Spotify authorize URL: `getAuthUrl(clientId, redirectUri)`
+   - Includes code_challenge, code_challenge_method=S256, and state
    - Spotify shows login/permission prompt
 4. Spotify redirects back to `/callback?code=xxx&state=yyy`
-5. Callback loader extracts code + codeVerifier:
-   - `exchangeCodeForToken(code, codeVerifier, clientId)`
-   - POST to Spotify token endpoint
+5. Callback component extracts code + state:
+   - Validates state matches sessionStorage (CSRF protection)
+   - `exchangeCodeForToken(code, state, clientId, redirectUri)`
+   - POST to Spotify token endpoint with code + codeVerifier
    - Returns access_token
-6. Save token: sessionStorage.setItem('spotify_token', token)
-7. Token auto-clears on browser close (sessionStorage not localStorage)
+6. Fetch user profile from Spotify API (`/v1/me` endpoint)
+   - Extract display_name, email, id
+   - Save to sessionStorage for instant display
+7. Save token: sessionStorage.setItem('spotify_token', token)
+8. Token auto-clears on browser close (sessionStorage not localStorage)
+9. Redirect to home with no error flash (silent success)
+10. User can logout via button which clears token + user profile
 
 ### File-Based Routing
 
@@ -716,13 +724,14 @@ gh-pages -d dist  # or manual upload of dist/ contents
 
 | Layer | Technology | Notes |
 |-------|-----------|-------|
-| **Framework** | React Router | Framework Mode (SPA, ssr: false) |
+| **Framework** | React Router | Framework Mode v7.13.1 (SPA, ssr: false) |
 | **Language** | TypeScript | Full type safety |
 | **Build Tool** | Vite | Fast HMR, optimized build |
-| **Styling** | TailwindCSS | Utility-first CSS |
-| **QR Scanning** | html5-qrcode | Camera-based QR decoding |
-| **QR Generation** | qrcode.react | React component for QR codes |
-| **Auth** | Spotify Web API (PKCE) | No backend required |
+| **Styling** | CSS Modules | Scoped styling, no framework |
+| **QR Scanning** | html5-qrcode | Camera-based QR decoding (pending) |
+| **QR Generation** | qrcode.react | React component for QR codes (pending) |
+| **File-based Routing** | @react-router/fs-routes | Auto-discovered routes from app/routes/ |
+| **Auth** | Spotify Web API (PKCE) | No backend required, state parameter for CSRF |
 | **Hosting** | GitHub Pages | Static SPA with 404.html fallback |
 
 ---
@@ -767,30 +776,73 @@ gh-pages -d dist  # or manual upload of dist/ contents
 
 ## Project Status & Notes
 
-**Current Phase**: Done ✅
+**Current Phase**: Authentication Complete ✅ (`Phase 3` finished)
 - [x] Phase 1: Project Scaffolding (React Router Framework Mode + SPA config)
-- [x] Phase 2-3: Type Definitions & Constants (pending implementation)
-- [x] Phase 4-5: Spotify Services (pending implementation)
-- [x] Phase 6-7: QR Services (pending implementation)
-- [ ] Phase 8: Route Components & Loaders (next)
-- [ ] Phase 9: Root Layout & Navigation
+- [x] Phase 2: File-based routing working with `@react-router/fs-routes` + `flatRoutes()`
+- [x] Phase 3: Spotify PKCE OAuth with state parameter (CSRF protection) ✅ COMPLETED THIS SESSION
+  - ✅ `app/lib/spotifyAuth.ts` — PKCE + state generation, code exchange, user profile fetching
+  - ✅ `app/routes/callback.tsx` — OAuth callback handler with state validation
+  - ✅ `app/routes/_index.tsx` — Home page with login/logout buttons, shows username
+  - ✅ User profile fetching from Spotify `/v1/me` endpoint
+  - ✅ Fixed callback flash on successful auth (silent redirect)
+  - ✅ Logout button clears token and user profile
+- [ ] Phase 4: QR Services (qrScanner.ts, qrGenerator.ts) — next priority
+- [ ] Phase 5: Scanner route (`app/routes/scanner.tsx`) with QR scanning
+- [ ] Phase 6: Generator route (`app/routes/generator.tsx`) with QR generation
+- [ ] Phase 7: Spotify search service (`spotifySearch.ts`)
+- [ ] Phase 8: Spotify playlist service (`spotifyPlaylist.ts`)
+- [ ] Phase 9: Root Layout & Navigation with route guards
 - [ ] Phase 10: GitHub Pages 404.html Fallback
 - [ ] Phase 11: Integration Testing & Deployment
 
 **Key Decisions**:
-- ✅ React Router Framework Mode (not vanilla react-router lib) — file-based routing, automatic code splitting
+- ✅ React Router Framework Mode v7.13.1 (not vanilla react-router lib) — file-based routing, automatic code splitting
+- ✅ File-based routing with `@react-router/fs-routes` and `flatRoutes()` — auto-discovered routes
 - ✅ SSR disabled — pure static SPA for GitHub Pages
 - ✅ Session storage for tokens — auto-clears on browser close (security + simplicity)
-- ✅ PKCE OAuth flow — no server-side secret needed
-- ✅ 404.html fallback — enables clean URLs on GitHub Pages SPA
+- ✅ PKCE OAuth flow with state parameter — no server-side secret needed, CSRF protected
+- ✅ User profile fetching — confirms active session with username display
+- ✅ Client-side only auth — no SSR loaders, pure `useEffect` pattern
+- ✅ CSS Modules only — Tailwind removed per user preference
+- ✅ IP loopback for local dev — `http://127.0.0.1:5173` required by Spotify for dev auth
+
+**Completed Features**:
+- ✅ Spotify PKCE OAuth with state parameter for CSRF protection
+- ✅ Token storage in sessionStorage (auto-clears on browser close)
+- ✅ User profile fetching to confirm active session
+- ✅ Login/logout buttons on home page with username display
+- ✅ File-based routing with auto-discovery
+- ✅ Callback handler validates state and redirects silently on success (no error flash)
+- ✅ Development server configured for IP loopback (`--host 127.0.0.1`)
+- ✅ CSS Modules styling support
+- ✅ TypeScript throughout
+- ✅ Security improvements: state parameter prevents CSRF attacks
 
 **Known Gotchas**:
 - GitHub Pages 404 redirect requires sessionStorage restoration in root loader
 - Spotify Web SDK playback requires Premium account (non-premium falls back to preview URL)
 - QR code size limit: ~2000 chars (JSON-encoded CardData)
 - Rate limits: Spotify API allows ~180 requests/15min per IP (tracked by session)
+- Dev server requires `--host 127.0.0.1` for Spotify IP loopback auth requirement
+- `@react-router/fs-routes` requires npm v7+ (legacy-peer-deps may be needed for some dependency trees)
+
+**Development Tips**:
+- Keep dev server running: `npm run dev` (starts at `http://127.0.0.1:5174/` if 5173 in use)
+- Restart dev server after `.env.local` changes
+- Token persists across browser tabs within same sessionStorage window
+- Token auto-clears when all browser windows/tabs closed (security feature)
+- Logout button clears both token and user profile for clean state
+- Testing OAuth: Use logout button to clear session, then login again to test full flow
+
+**Next Steps**:
+1. Implement QR services (scanner + generator libraries)
+2. Build scanner route with camera integration
+3. Build generator route with search and batch QR generation
+4. Add Spotify search and playlist services
+5. Configure GitHub Pages deployment with 404.html fallback
+6. Test on mobile for camera permissions and QR scanning
 
 ---
 
-**Last Updated**: March 18, 2026  
-**Status**: Planning & architecture finalized; implementation in progress
+**Last Updated**: March 18, 2026 (Session completed)  
+**Status**: Spotify authentication fully working; QR services ready for implementation
