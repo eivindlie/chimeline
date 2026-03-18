@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Route } from "./+types/_index";
-import { getToken, getAuthUrl, getUser } from "../lib/spotifyAuth";
+import { getToken, getAuthUrl, getUser, clearToken } from "../lib/spotifyAuth";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -46,13 +46,22 @@ export default function Home() {
     }
   };
 
+  const handleLogout = () => {
+    clearToken();
+    setIsLoggedIn(false);
+    setUsername(null);
+  };
+
   return (
     <div>
       <h1>Welcome to ChimeLine</h1>
       <p>A timeline-based card game with QR code song playback.</p>
 
       {isLoggedIn ? (
-        <p>✓ You are logged in with Spotify {username && `as ${username}`}</p>
+        <div>
+          <p>✓ You are logged in with Spotify {username && `as ${username}`}</p>
+          <button onClick={handleLogout}>Logout</button>
+        </div>
       ) : (
         <button onClick={handleLogin} disabled={isLoading}>
           {isLoading ? "Logging in..." : "Login with Spotify"}

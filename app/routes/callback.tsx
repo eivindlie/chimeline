@@ -10,28 +10,31 @@ export default function CallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
+    let isMounted = true; // Prevent state updates after unmount
+
     const handleCallback = async () => {
       const code = searchParams.get("code");
       const state = searchParams.get("state");
       const errorParam = searchParams.get("error");
 
+      // Handle Spotify error response
       if (errorParam) {
-        setError(`Spotify auth error: ${errorParam}`);
-        setTimeout(() => navigate("/"), 3000);
+        if (isMounted) {
+          setError(`Spotify auth error: ${errorParam}`);
+          setTimeout(() => navigate("/"), 2000);
+        }
         return;
       }
 
-      if (!code) {
-        setError("No authorization code received");
-        setTimeout(() => navigate("/"), 3000);
-        return;
-      }
-
-      if (!state) {
-        setError("No state parameter received");
-        setTimeout(() => navigate("/"), 3000);
+      // Validate required parameters
+      if (!code || !state) {
+        if (isMounted) {
+          setError("Invalid callback parameters");
+          setTimeout(() => navigate("/"), 2000);
+        }
         return;
       }
 
@@ -58,17 +61,26 @@ export default function CallbackPage() {
         const userProfile = await fetchUserProfile(access_token);
         saveUser(userProfile);
 
-        // Redirect to home
-        navigate("/");
+        // Success - redirect silently, don't set error
+        if (isMounted) {
+          navigate("/");
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Token exchange failed:", message);
-        setError(`Authentication failed: ${message}`);
-        setTimeout(() => navigate("/"), 3000);
+        if (isMounted) {
+          setError(`Authentication failed: ${message}`);
+          setTimeout(() => navigate("/"), 2000);
+        }
       }
     };
 
     handleCallback();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
   }, [searchParams, navigate]);
 
   if (error) {
