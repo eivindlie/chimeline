@@ -135,6 +135,21 @@ export default function ScannerPage() {
         const fullData = await fetchTrackMetadata(trackId, token);
         console.debug("Scanner: Got metadata:", fullData.title);
         setLastScanned(fullData);
+
+        // Step 3: Attempt to auto-play the track (but don't fail if it errors)
+        console.debug("Scanner: Attempting playback...");
+        try {
+          await handlePlay(fullData);
+          console.debug("Scanner: Playback started");
+        } catch (playbackError) {
+          const playbackMsg =
+            playbackError instanceof Error
+              ? playbackError.message
+              : "Unknown error";
+          console.warn("Playback failed (non-blocking):", playbackMsg);
+          // Don't fail the scan—metadata loaded successfully
+          // User can manually click Play if needed
+        }
         setIsLoadingTrack(false);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
@@ -152,7 +167,7 @@ export default function ScannerPage() {
       // Cleanup: ensure scanner stops if component unmounts
       stopScanning();
     };
-  }, [isScanning, token]);
+  }, [isScanning, handlePlay, token]);
 
   if (!isAuthed) {
     return (
@@ -211,9 +226,24 @@ export default function ScannerPage() {
           <p>
             <strong>Release Date:</strong> {lastScanned.releaseDate}
           </p>
-          <p style={{ marginTop: "12px", fontSize: "12px", color: "#666" }}>
-            Metadata fetch successful! Playback coming soon.
-          </p>
+
+          <div className={styles.controls}>
+            {!isPlaying ? (
+              <button
+                onClick={() => handlePlay(lastScanned)}
+                className={styles.button}
+              >
+                Play
+              </button>
+            ) : (
+              <button onClick={handlePause} className={styles.buttonPause}>
+                Pause
+              </button>
+            )}
+            <button onClick={handleStop} className={styles.buttonStop}>
+              Stop
+            </button>
+          </div>
         </div>
       )}
     </div>
