@@ -70,4 +70,4 @@ export function buildSpotifyTrackUri(trackId: string): string {
  * The silence song - John Cage's 4'33"
  * Perfect for device setup (silent, doesn't spoil gameplay)
  */
-export const SILENCE_TRACK_ID = "6WoJVn1hqh0OTLhA1VrJR4";
+export const SILENCE_TRACK_ID = "2bNCdW4rLnCTzgqUXTTDO1";
