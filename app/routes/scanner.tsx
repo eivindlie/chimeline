@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import type { Route } from "./+types/scanner";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
-import { playTrack, pausePlayback } from "../lib/spotifyPlayback";
+import { playTrack, pausePlayback, resumePlayback } from "../lib/spotifyPlayback";
 import { scanQRCode, stopScanning } from "../lib/qrScanner";
 import { getToken } from "../lib/spotifyAuth";
 import { getSelectedDeviceId } from "../lib/spotifyDevices";
@@ -134,9 +134,17 @@ export default function ScannerPage() {
     if (isPlaying) {
       await handlePause();
     } else {
-      await handlePlay(lastScanned);
+      // Resume from pause instead of restarting the track
+      try {
+        await resumePlayback(player, selectedDeviceId);
+        setIsPlaying(true);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        console.error("Resume failed:", message);
+        setError(`Resume failed: ${message}`);
+      }
     }
-  }, [isPlaying, lastScanned, handlePlay, handlePause]);
+  }, [isPlaying, lastScanned, player, selectedDeviceId, handlePause]);
 
   const handleScanNext = useCallback(() => {
     setLastScanned(null);

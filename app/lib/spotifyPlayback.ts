@@ -6,6 +6,46 @@
 import { getToken } from "./spotifyAuth";
 
 /**
+ * Resume playback from where it was paused
+ * Just calls play endpoint without URI to resume current track
+ */
+export async function resumePlayback(player: any, deviceId: string | null): Promise<void> {
+  if (!player) {
+    throw new Error("Spotify Web Playback SDK not initialized");
+  }
+
+  if (!deviceId) {
+    throw new Error("Device ID not available");
+  }
+
+  const token = getToken();
+  if (!token) {
+    throw new Error("Not authenticated with Spotify");
+  }
+
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMsg = errorData.error?.message || response.statusText;
+      throw new Error(`REST API returned ${response.status}: ${errorMsg}`);
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("Resume failed:", errMsg);
+    throw new Error(`Resume failed: ${errMsg}`);
+  }
+}
+
+/**
  * Start playback of a track on the registered Spotify device
  * Uses REST API with device ID from SDK player
  */
