@@ -128,10 +128,22 @@ export default function ScannerPage() {
     }
   }, [playerReady, player, selectedDeviceId]);
 
-  const handleStop = useCallback(async () => {
-    await handlePause();
+  const handlePlayPause = useCallback(async () => {
+    if (!lastScanned) return;
+    
+    if (isPlaying) {
+      await handlePause();
+    } else {
+      await handlePlay(lastScanned);
+    }
+  }, [isPlaying, lastScanned, handlePlay, handlePause]);
+
+  const handleScanNext = useCallback(() => {
     setLastScanned(null);
-  }, [handlePause]);
+    setIsLoadingTrack(false);
+    setError(null);
+    setIsScanning(true);
+  }, []);
 
   // Start scanner when isScanning becomes true and element is mounted
   useEffect(() => {
@@ -253,31 +265,16 @@ export default function ScannerPage() {
       {lastScanned && !isLoadingTrack && (
         <div className={styles.trackInfo}>
           <h2>✅ Track Loaded</h2>
-          <p>
-            <strong>Title:</strong> {lastScanned.title}
-          </p>
-          <p>
-            <strong>Artist:</strong> {lastScanned.artist}
-          </p>
-          <p>
-            <strong>Release Date:</strong> {lastScanned.releaseDate}
-          </p>
 
           <div className={styles.controls}>
-            {!isPlaying ? (
-              <button
-                onClick={() => handlePlay(lastScanned)}
-                className={styles.button}
-              >
-                Play
-              </button>
-            ) : (
-              <button onClick={handlePause} className={styles.buttonPause}>
-                Pause
-              </button>
-            )}
-            <button onClick={handleStop} className={styles.buttonStop}>
-              Stop
+            <button
+              onClick={handlePlayPause}
+              className={styles.button}
+            >
+              {isPlaying ? "⏸ Pause" : "▶ Play"}
+            </button>
+            <button onClick={handleScanNext} className={styles.button}>
+              📱 Scan Next Song
             </button>
           </div>
         </div>
