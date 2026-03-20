@@ -5,6 +5,7 @@ import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
 import { playTrack, pausePlayback } from "../lib/spotifyPlayback";
 import { scanQRCode, stopScanning } from "../lib/qrScanner";
 import { getToken } from "../lib/spotifyAuth";
+import { getSelectedDeviceId } from "../lib/spotifyDevices";
 import { fetchTrackMetadata } from "../lib/trackMetadata";
 import type { FullCardData } from "../lib/schemas";
 import styles from "./scanner.module.css";
@@ -23,15 +24,19 @@ export default function ScannerPage() {
   const [lastScanned, setLastScanned] = useState<FullCardData | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   // Check auth and redirect to login if needed
   const isAuthed = useAuthRedirect("/scanner");
 
-  // Initialize token once authenticated
+  // Initialize token and device ID once authenticated
   useEffect(() => {
     if (isAuthed) {
       const t = getToken();
       setToken(t);
+      
+      const savedDeviceId = getSelectedDeviceId();
+      setSelectedDeviceId(savedDeviceId);
     }
   }, [isAuthed]);
 
@@ -64,13 +69,20 @@ export default function ScannerPage() {
         return;
       }
 
+      if (!selectedDeviceId) {
+        setError(
+          "No Spotify device selected. Please complete the setup first. Go to the home page and click 'Setup Device'."
+        );
+        return;
+      }
+
       if (!playerReady || !player) {
         setError(
           "Spotify Web Playback SDK not ready. " +
             "Check browser console for initialization errors. " +
             "Try refreshing the page."
         );
-        console.error("🔴 Player not initialized", {
+        console.error("Player not initialized", {
           playerReady,
           playerExists: !!player,
         });
@@ -80,7 +92,7 @@ export default function ScannerPage() {
       setError(null);
 
       try {
-        await playTrack(player, cardData.spotifyUri, deviceId);
+        await playTrack(player, cardData.spotifyUri, selectedDeviceId);
         setIsPlaying(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
@@ -88,7 +100,7 @@ export default function ScannerPage() {
         setError(`Playback failed: ${message}`);
       }
     },
-    [token, playerReady, player, deviceId]
+    [token, playerReady, player, selectedDeviceId]
   );
 
   const handlePause = useCallback(async () => {
@@ -100,14 +112,14 @@ export default function ScannerPage() {
     setError(null);
 
     try {
-      await pausePlayback(player);
+      await pausePlayback(player, selectedDeviceId);
       setIsPlaying(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       console.error("Pause failed:", message);
       setError(`Pause failed: ${message}`);
     }
-  }, [playerReady, player]);
+  }, [playerReady, player, selectedDeviceId]);
 
   const handleStop = useCallback(async () => {
     await handlePause();
@@ -176,6 +188,21 @@ export default function ScannerPage() {
       <div className={styles.container}>
         <h1>QR Scanner</h1>
         <p>Redirecting to Spotify login...</p>
+      </div>
+    );
+  }
+
+  if (!selectedDeviceId) {
+    return (
+      <div className={styles.container}>
+        <h1>QR Scanner</h1>
+        <div className={styles.error}>
+          <p>No Spotify device configured</p>
+        </div>
+        <p>Before you can scan QR codes, you need to complete the device setup:</p>
+        <a href="/chimeline/" className={styles.button}>
+          Go Home & Setup Device
+        </a>
       </div>
     );
   }

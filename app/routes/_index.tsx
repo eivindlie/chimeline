@@ -14,7 +14,17 @@ export default function Home() {
       <h1>ChimeLine</h1>
       <p>Play songs during a timeline-based card game using QR codes.</p>
 
-      <div style={{ marginTop: "2rem", display: "flex", gap: "1rem", justifyContent: "center" }}>
+      <div style={{ marginTop: "2rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+        <Link to="/setup" style={{
+          padding: "1rem 2rem",
+          fontSize: "1.1rem",
+          backgroundColor: "#1DB954",
+          color: "white",
+          textDecoration: "none",
+          borderRadius: "8px",
+        }}>
+          🎵 Setup Device
+        </Link>
         <Link to="/scanner" style={{
           padding: "1rem 2rem",
           fontSize: "1.1rem",

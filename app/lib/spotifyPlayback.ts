@@ -49,8 +49,9 @@ export async function playTrack(player: any, spotifyUri: string, deviceId: strin
 
 /**
  * Pause playback via REST API
+ * Optionally targets a specific device via deviceId
  */
-export async function pausePlayback(player: any): Promise<void> {
+export async function pausePlayback(player: any, deviceId?: string | null): Promise<void> {
   if (!player) {
     throw new Error("Spotify Web Playback SDK not initialized");
   }
@@ -61,9 +62,11 @@ export async function pausePlayback(player: any): Promise<void> {
   }
 
   try {
-    console.debug("⏸ Pausing via REST API");
+    const url = deviceId 
+      ? `https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`
+      : "https://api.spotify.com/v1/me/player/pause";
     
-    const response = await fetch("https://api.spotify.com/v1/me/player/pause", {
+    const response = await fetch(url, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -76,8 +79,6 @@ export async function pausePlayback(player: any): Promise<void> {
       const errorMsg = errorData.error?.message || response.statusText;
       throw new Error(`REST API returned ${response.status}: ${errorMsg}`);
     }
-
-    console.debug("✓ Paused");
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("✗ Pause failed:", errMsg);
