@@ -78,33 +78,21 @@ export async function generateCardsPDFFromTracks(
       tableBody.push(cells);
     }
 
-    // Create the document definition with proper font definitions
+    // Create the document definition
     const docDef: any = {
       pageSize: 'A4',
       pageMargins: [10, 10, 10, 10],
-      fonts: {
-        Helvetica: {
-          normal: 'Helvetica',
-          bold: 'Helvetica-Bold',
-          italics: 'Helvetica-Oblique',
-          bolditalics: 'Helvetica-BoldOblique',
-        },
-      },
-      defaultStyle: {
-        font: 'Helvetica',
-      },
       content: [
         {
           text: 'PRINTING & CUTTING GUIDE',
-          fontSize: 9,
-          color: '#999',
+          fontSize: 10,
+          color: '#666',
           alignment: 'center',
           margin: [0, 0, 0, 5],
-          bold: true,
         },
         {
           text: 'Print this document. Stack pages. Cut vertically at column dividers (2 cuts), then horizontally at row dividers (3 cuts).',
-          fontSize: 7,
+          fontSize: 8,
           color: '#999',
           alignment: 'center',
           margin: [0, 0, 0, 15],
