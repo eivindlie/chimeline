@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Route } from "./+types/scanner";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
-import { playViaSDK, pauseViaSDK, playTrack, pausePlayback } from "../lib/spotifyPlayback";
+import { playTrack, pausePlayback } from "../lib/spotifyPlayback";
 import { scanQRCode, stopScanning } from "../lib/qrScanner";
 import { getToken } from "../lib/spotifyAuth";
 import { fetchTrackMetadata } from "../lib/trackMetadata";
@@ -62,43 +62,50 @@ export default function ScannerPage() {
         return;
       }
 
+      if (!playerReady || !player) {
+        setError(
+          "Spotify Web Playback SDK not ready. " +
+            "Check browser console for initialization errors. " +
+            "Try refreshing the page."
+        );
+        console.error("🔴 BLOCKED: Player not initialized", {
+          playerReady,
+          playerExists: !!player,
+        });
+        return;
+      }
+
       setError(null);
 
       try {
-        // Try SDK first if ready, fall back to REST API
-        if (playerReady && player) {
-          await playViaSDK(player, cardData.spotifyUri, token);
-        } else {
-          await playTrack(cardData.spotifyUri, token);
-        }
+        await playTrack(player, cardData.spotifyUri);
         setIsPlaying(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Failed to play track:", message);
-        setError(`Failed to play: ${message}`);
+        setError(`Playback failed: ${message}`);
       }
     },
     [token, playerReady, player]
   );
 
   const handlePause = useCallback(async () => {
-    if (!token) return;
+    if (!playerReady || !player) {
+      setError("Spotify playback not available");
+      return;
+    }
 
     setError(null);
 
     try {
-      if (playerReady && player) {
-        await pauseViaSDK(player, token);
-      } else {
-        await pausePlayback(token);
-      }
+      await pausePlayback(player);
       setIsPlaying(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      console.error("Failed to pause playback:", message);
-      setError(`Failed to pause: ${message}`);
+      console.error("Pause failed:", message);
+      setError(`Pause failed: ${message}`);
     }
-  }, [token, playerReady, player]);
+  }, [playerReady, player]);
 
   const handleStop = useCallback(async () => {
     await handlePause();
