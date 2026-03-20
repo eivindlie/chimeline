@@ -14,7 +14,9 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import styles from "./root.module.css";
 
-export const links: Route.LinksFunction = () => [];
+export const links: Route.LinksFunction = () => [
+  { rel: "manifest", href: "/manifest.json" },
+];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -22,6 +24,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#1db954" />
+        <meta name="description" content="Play songs during a timeline-based card game using QR codes" />
+        
+        {/* iOS PWA Support */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="ChimeLine" />
+        <link rel="apple-touch-icon" href="/favicon.ico" />
+        
         <Meta />
         <Links />
       </head>
