@@ -49,9 +49,8 @@ export async function generateCardsPDFFromTracks(
 
     console.log(`[pdfCardGenerator] Generated QR codes for ${trackQRs.size} tracks`);
 
-    // Build table rows: 3 columns per row, with QR code images
-    const tableBody: any[] = [];
-
+    // Build QR code table rows: 3 columns per row
+    const qrTableBody: any[] = [];
     for (let i = 0; i < tracks.length; i += 3) {
       const rowTracks = tracks.slice(i, i + 3);
       const cells: any[] = rowTracks.map((track) => {
@@ -61,8 +60,8 @@ export async function generateCardsPDFFromTracks(
           fit: [184, 184], // ~65mm at 72dpi
           alignment: 'center' as const,
           border: [1, 1, 1, 1] as [number, number, number, number],
-          borderColor: '#f0f0f0',
-          margin: [3, 3, 3, 3] as [number, number, number, number],
+          borderColor: '#e0e0e0',
+          margin: [2, 2, 2, 2] as [number, number, number, number],
         };
       });
 
@@ -71,43 +70,102 @@ export async function generateCardsPDFFromTracks(
         cells.push({
           text: '',
           border: [1, 1, 1, 1] as [number, number, number, number],
-          borderColor: '#f0f0f0',
+          borderColor: '#e0e0e0',
         });
       }
 
-      tableBody.push(cells);
+      qrTableBody.push(cells);
     }
 
-    // Create the document definition
+    // Build song title table rows: 3 columns per row
+    const titleTableBody: any[] = [];
+    for (let i = 0; i < tracks.length; i += 3) {
+      const rowTracks = tracks.slice(i, i + 3);
+      const cells: any[] = rowTracks.map((track) => {
+        return {
+          text: `${track.title}\n${track.artist}`,
+          alignment: 'center' as const,
+          valign: 'center' as const,
+          fontSize: 9,
+          border: [1, 1, 1, 1] as [number, number, number, number],
+          borderColor: '#e0e0e0',
+          margin: [4, 4, 4, 4] as [number, number, number, number],
+        };
+      });
+
+      // Pad with empty cells if row has fewer than 3 items (last row)
+      while (cells.length < 3) {
+        cells.push({
+          text: '',
+          border: [1, 1, 1, 1] as [number, number, number, number],
+          borderColor: '#e0e0e0',
+        });
+      }
+
+      titleTableBody.push(cells);
+    }
+
+    // Create the document definition with both pages
     const docDef: any = {
       pageSize: 'A4',
-      pageMargins: [10, 10, 10, 10],
+      pageMargins: [12, 10, 12, 10], // left, top, right, bottom - balanced margins
       content: [
         {
-          text: 'PRINTING & CUTTING GUIDE',
+          text: 'PAGE 1: QR CODES (Print & Cut)',
           fontSize: 10,
           color: '#666',
           alignment: 'center',
-          margin: [0, 0, 0, 5],
+          margin: [0, 0, 0, 3],
         },
         {
-          text: 'Print this document. Stack pages. Cut vertically at column dividers (2 cuts), then horizontally at row dividers (3 cuts).',
+          text: 'Print this document. Stack pages. Cut vertically (2 cuts), then horizontally (3 cuts).',
           fontSize: 8,
           color: '#999',
           alignment: 'center',
-          margin: [0, 0, 0, 15],
+          margin: [0, 0, 0, 10],
         },
         {
           table: {
             widths: ['*', '*', '*'], // 3 equal columns
-            body: tableBody,
+            body: qrTableBody,
             headerRows: 0,
           },
           layout: {
             hLineWidth: () => 0.5,
             vLineWidth: () => 0.5,
-            hLineColor: () => '#f0f0f0',
-            vLineColor: () => '#f0f0f0',
+            hLineColor: () => '#d0d0d0',
+            vLineColor: () => '#d0d0d0',
+          },
+        },
+        {
+          text: '',
+          pageBreak: 'after',
+        },
+        {
+          text: 'PAGE 2: SONG TITLES (Print & Cut - Flip Side)',
+          fontSize: 10,
+          color: '#666',
+          alignment: 'center',
+          margin: [0, 0, 0, 3],
+        },
+        {
+          text: 'Print & cut these cards same as page 1. Glue back-to-back with page 1 cards.',
+          fontSize: 8,
+          color: '#999',
+          alignment: 'center',
+          margin: [0, 0, 0, 10],
+        },
+        {
+          table: {
+            widths: ['*', '*', '*'], // 3 equal columns
+            body: titleTableBody,
+            headerRows: 0,
+          },
+          layout: {
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => '#d0d0d0',
+            vLineColor: () => '#d0d0d0',
           },
         },
       ],
