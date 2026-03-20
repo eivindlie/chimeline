@@ -6,6 +6,22 @@
 import { getToken } from "./spotifyAuth";
 
 /**
+ * Check if error is a 404 (device no longer available)
+ * If so, clear the device from storage
+ */
+export function is404Error(status: number): boolean {
+  return status === 404;
+}
+
+export function clearDeviceOnNotFound() {
+  // Device no longer available - clear it so user has to setup again
+  localStorage.removeItem("chimeline_selected_device");
+  throw new Error(
+    "Device lost (404). Setup required. Please return to setup your device."
+  );
+}
+
+/**
  * Resume playback from where it was paused
  * Just calls play endpoint without URI to resume current track
  */
@@ -34,6 +50,9 @@ export async function resumePlayback(player: any, deviceId: string | null): Prom
     });
 
     if (!response.ok) {
+      if (is404Error(response.status)) {
+        clearDeviceOnNotFound();
+      }
       const errorData = await response.json().catch(() => ({}));
       const errorMsg = errorData.error?.message || response.statusText;
       throw new Error(`REST API returned ${response.status}: ${errorMsg}`);
@@ -76,6 +95,9 @@ export async function playTrack(player: any, spotifyUri: string, deviceId: strin
     });
 
     if (!response.ok) {
+      if (is404Error(response.status)) {
+        clearDeviceOnNotFound();
+      }
       const errorData = await response.json().catch(() => ({}));
       const errorMsg = errorData.error?.message || response.statusText;
       throw new Error(`REST API returned ${response.status}: ${errorMsg}`);
@@ -107,6 +129,9 @@ export async function pausePlaybackOnDevice(deviceId: string): Promise<void> {
     });
 
     if (!response.ok) {
+      if (is404Error(response.status)) {
+        clearDeviceOnNotFound();
+      }
       const errorData = await response.json().catch(() => ({}));
       const errorMsg = errorData.error?.message || response.statusText;
       throw new Error(`REST API returned ${response.status}: ${errorMsg}`);

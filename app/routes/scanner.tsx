@@ -104,10 +104,17 @@ export default function ScannerPage() {
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Failed to play track:", message);
+        
+        // Check if device lost - redirect to setup
+        if (message.includes("Setup required")) {
+          navigate("/setup");
+          return;
+        }
+        
         setError(`Playback failed: ${message}`);
       }
     },
-    [token, playerReady, player, selectedDeviceId]
+    [token, playerReady, player, selectedDeviceId, navigate]
   );
 
   const handlePause = useCallback(async () => {
@@ -124,9 +131,16 @@ export default function ScannerPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       console.error("Pause failed:", message);
+      
+      // Check if device lost - redirect to setup
+      if (message.includes("Setup required")) {
+        navigate("/setup");
+        return;
+      }
+      
       setError(`Pause failed: ${message}`);
     }
-  }, [playerReady, player, selectedDeviceId]);
+  }, [playerReady, player, selectedDeviceId, navigate]);
 
   const handlePlayPause = useCallback(async () => {
     if (!lastScanned) return;
@@ -141,10 +155,17 @@ export default function ScannerPage() {
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Resume failed:", message);
-        setError(`Resume failed: ${message}`);
+          
+          // Check if device lost - redirect to setup
+          if (message.includes("Setup required")) {
+            navigate("/setup");
+            return;
+          }
+          
+          setError(`Resume failed: ${message}`);
+        }
       }
-    }
-  }, [isPlaying, lastScanned, player, selectedDeviceId, handlePause]);
+    }, [isPlaying, lastScanned, player, selectedDeviceId, handlePause, navigate]);
 
   const handleScanNext = useCallback(() => {
     setLastScanned(null);
