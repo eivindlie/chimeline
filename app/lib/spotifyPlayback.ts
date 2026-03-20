@@ -40,11 +40,9 @@ export async function playTrack(player: any, spotifyUri: string, deviceId: strin
       const errorMsg = errorData.error?.message || response.statusText;
       throw new Error(`REST API returned ${response.status}: ${errorMsg}`);
     }
-
-    console.debug("✓ Playing:", spotifyUri);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.error("✗ Playback failed:", errMsg);
+    console.error("Playback failed:", errMsg);
     throw new Error(`Playback failed: ${errMsg}`);
   }
 }

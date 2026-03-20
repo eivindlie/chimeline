@@ -126,11 +126,8 @@ export default function ScannerPage() {
         setError(null);
         setIsLoadingTrack(false);
 
-        console.debug("Scanner: Waiting for QR code...");
-
         // Step 1: Scan QR and get track ID
         const trackId = await scanQRCode("qr-reader");
-        console.debug("Scanner: Got track ID:", trackId);
         setIsScanning(false);
 
         // Step 2: Fetch metadata from Spotify
@@ -140,16 +137,12 @@ export default function ScannerPage() {
           throw new Error("Not authenticated with Spotify");
         }
 
-        console.debug("Scanner: Fetching metadata...");
         const fullData = await fetchTrackMetadata(trackId, token);
-        console.debug("Scanner: Got metadata:", fullData.title);
         setLastScanned(fullData);
 
         // Step 3: Attempt to auto-play the track (but don't fail if it errors)
-        console.debug("Scanner: Attempting playback...");
         try {
           await handlePlay(fullData);
-          console.debug("Scanner: Playback started");
         } catch (playbackError) {
           const playbackMsg =
             playbackError instanceof Error

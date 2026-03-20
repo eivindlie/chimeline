@@ -25,7 +25,6 @@ export function useSpotifyPlayer(token: string | null): {
 
   useEffect(() => {
     if (!token) {
-      console.debug("No token available, skipping SDK init");
       setPlayerReady(false);
       setPlayer(null);
       return;
@@ -33,7 +32,6 @@ export function useSpotifyPlayer(token: string | null): {
 
     // Prevent multiple simultaneous SDK initializations
     if (sdkInitializingRef.current) {
-      console.debug("SDK already initializing, skipping duplicate init");
       return;
     }
 
@@ -41,12 +39,11 @@ export function useSpotifyPlayer(token: string | null): {
     let isMounted = true;
     let sdkReadyTimeout: NodeJS.Timeout | null = null;
 
-    console.debug("🎵 Loading Spotify Web Playback SDK...");
     const script = document.createElement("script");
     script.src = "https://sdk.scdn.co/spotify-player.js";
     
     script.onload = () => {
-      console.debug("✓ SDK script loaded from CDN");
+      // SDK script loaded
     };
 
     script.onerror = () => {
@@ -57,15 +54,12 @@ export function useSpotifyPlayer(token: string | null): {
 
     // Set up the callback BEFORE appending the script
     (window as any).onSpotifyWebPlaybackSDKReady = () => {
-      console.debug("✓ Spotify Web Playback SDK ready callback fired");
-      
       if (sdkReadyTimeout) {
         clearTimeout(sdkReadyTimeout);
         sdkReadyTimeout = null;
       }
 
       if (!isMounted) {
-        console.debug("Component unmounted, skipping player initialization");
         sdkInitializingRef.current = false;
         return;
       }
@@ -75,105 +69,89 @@ export function useSpotifyPlayer(token: string | null): {
           name: "ChimeLine Scanner",
           getOAuthToken: (callback: any) => {
             // IMPORTANT: SDK expects a callback, not a return value!
-            console.debug("Spotify SDK requesting OAuth token (callback style)");
             const currentToken = token;
             if (!currentToken) {
-              console.error("✗ NO TOKEN AVAILABLE when SDK asked for it!");
+              console.error("No token available for Spotify SDK");
               callback(null);
               return;
             }
-            console.debug("Returning token via callback:", currentToken ? `${currentToken.slice(0, 10)}...` : "NULL");
             callback(currentToken);  // Use callback pattern!
           },
           volume: 0.5,
         });
 
-        console.debug("✓✓ Spotify.Player constructor succeeded");
-
         // Set up event listeners BEFORE calling connect
         // Wrap each listener in try-catch to isolate failures
         try {
           newPlayer.addListener("ready", ({ device_id }: any) => {
-            console.debug("✓✓ Spotify player READY with device ID:", device_id);
             if (isMounted) {
               setDeviceId(device_id);  // Store the device ID!
               setPlayerReady(true);
             }
           });
-          console.debug("✓ Ready listener registered");
         } catch (err) {
           console.error("✗ Failed to register ready listener:", err);
         }
 
         try {
           newPlayer.addListener("player_state_changed", (state: any) => {
-            console.debug("Player state changed:", state?.paused ? "paused" : "playing");
             if (!state || !isMounted) return;
             setIsPlaying(!state.paused);
           });
-          console.debug("✓ Player state listener registered");
         } catch (err) {
           console.error("✗ Failed to register player_state_changed listener:", err);
         }
 
         try {
           newPlayer.addListener("initialization_error", ({ message }: any) => {
-            console.error("✗ Spotify player init error:", message);
+            console.error("Spotify player init error:", message);
             if (isMounted) setError(`Spotify init error: ${message}`);
           });
-          console.debug("✓ Initialization error listener registered");
         } catch (err) {
           console.error("✗ Failed to register initialization_error listener:", err);
         }
 
         try {
           newPlayer.addListener("authentication_error", ({ message }: any) => {
-            console.error("✗ Spotify auth error:", message);
+            console.error("Spotify auth error:", message);
             if (isMounted) setError(`Auth error: ${message}. Try logging in again.`);
           });
-          console.debug("✓ Authentication error listener registered");
         } catch (err) {
           console.error("✗ Failed to register authentication_error listener:", err);
         }
 
         try {
           newPlayer.addListener("account_error", ({ message }: any) => {
-            console.error("✗ Spotify account error:", message);
+            console.error("Spotify account error:", message);
             if (isMounted) setError(`Account error: ${message}`);
           });
-          console.debug("✓ Account error listener registered");
         } catch (err) {
           console.error("✗ Failed to register account_error listener:", err);
         }
 
         try {
           newPlayer.addListener("playback_error", ({ message }: any) => {
-            console.error("✗ Spotify playback error:", message);
+            console.error("Spotify playback error:", message);
             // Don't fail on playback errors, just log them
           });
-          console.debug("✓ Playback error listener registered");
         } catch (err) {
           console.error("✗ Failed to register playback_error listener:", err);
         }
 
         try {
           newPlayer.addListener("discrepancies_found", (discrepancies: any) => {
-            console.warn("⚠️ Spotify discrepancies found:", discrepancies);
+            console.warn("Spotify discrepancies found:", discrepancies);
           });
-          console.debug("✓ Discrepancies listener registered");
         } catch (err) {
-          console.error("✗ Failed to register discrepancies_found listener:", err);
+          console.error("Failed to register discrepancies_found listener:", err);
         }
 
-        console.debug("✓ All event listeners registered");
-        console.debug("Calling player.connect()...");
-        
         // Set a timeout for player.connect() in case it hangs
         let connectTimeoutId: NodeJS.Timeout | null = null;
         const connectPromise = newPlayer.connect();
         
         connectTimeoutId = setTimeout(() => {
-          console.error("✗ player.connect() TIMED OUT after 10 seconds");
+          console.error("Spotify player connection timeout");
           if (isMounted) setError("Spotify player connection timeout. Try refreshing the page.");
           sdkInitializingRef.current = false;
           connectTimeoutId = null;
@@ -185,16 +163,14 @@ export function useSpotifyPlayer(token: string | null): {
               clearTimeout(connectTimeoutId);
               connectTimeoutId = null;
             }
-            console.debug("✓ player.connect() returned:", success);
             if (!isMounted) {
               sdkInitializingRef.current = false;
               return;
             }
             if (success) {
-              console.debug("✓ Player connected, waiting for ready event...");
               if (isMounted) setPlayer(newPlayer);
             } else {
-              console.error("✗ Spotify player connect() returned false");
+              console.error("Spotify player connect() returned false");
               setError("Could not connect to Spotify player device");
             }
             sdkInitializingRef.current = false;
@@ -206,16 +182,13 @@ export function useSpotifyPlayer(token: string | null): {
               connectTimeoutId = null;
             }
             const errMsg = err instanceof Error ? err.message : String(err);
-            console.error("✗ Player connect error:", errMsg);
+            console.error("Spotify player connect error:", errMsg);
             if (isMounted) setError(`Failed to connect Spotify player: ${errMsg}`);
             sdkInitializingRef.current = false;
           });
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : String(err);
-        const stack = err instanceof Error ? err.stack : "";
-        console.error("✗✗✗ EXCEPTION during Spotify player init:", errMsg);
-        console.error("Stack trace:", stack);
-        console.error("Full error object:", err);
+        console.error("Exception during Spotify player init:", errMsg);
         if (isMounted) setError(`Failed to init Spotify player: ${errMsg}`);
         sdkInitializingRef.current = false;
       }
@@ -223,7 +196,7 @@ export function useSpotifyPlayer(token: string | null): {
 
     // Set a timeout in case onSpotifyWebPlaybackSDKReady never fires
     sdkReadyTimeout = setTimeout(() => {
-      console.warn("⚠️  Spotify SDK ready callback did not fire after 5 seconds");
+      console.warn("Spotify SDK ready callback did not fire after 5 seconds");
       if (isMounted) setError("Spotify SDK failed to initialize. Check network connection.");
       sdkInitializingRef.current = false;
     }, 5000);
@@ -231,7 +204,6 @@ export function useSpotifyPlayer(token: string | null): {
     document.body.appendChild(script);
 
     return () => {
-      console.debug("Cleaning up Spotify SDK");
       isMounted = false;
       if (sdkReadyTimeout) {
         clearTimeout(sdkReadyTimeout);
