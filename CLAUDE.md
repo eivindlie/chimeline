@@ -851,12 +851,26 @@ gh-pages -d dist  # or manual upload of dist/ contents
 - ✅ GitHub Pages deployment with custom domain (chimeline.prograd.no)
 - ✅ GitHub Actions CI/CD pipeline (auto-build & deploy on push)
 - ✅ SPA routing fallback (404.html for GitHub Pages)
+- ✅ **QR Payload Refactor** (this session): `{id}` only, reduced ~3× in size
+- ✅ **SRP-Compliant Utilities** (this session):
+  - `qrDecoder.ts`: Parse QR payload → extract track ID
+  - `trackMetadata.ts`: Fetch full metadata from Spotify API
+  - `qrScanner.ts`: Promise-based scanner (eliminates race conditions)
+- ✅ **UX Improvements** (this session):
+  - Scanner closes immediately on QR detection
+  - "Loading track..." feedback during metadata fetch
+  - Better console logging for debugging
 
 **Known Issues**:
 - ❌ **Spotify Web Playback SDK not connecting** — `ready` event never fires
   - Workaround: Use REST API playback (requires Spotify app running on a device)
   - Investigate: CORS issue? Token scope? Browser policy?
   - Impact: Users must have Spotify app open; can't play in browser without it
+- ⚠️ **Metadata fetch returns 404** (this session):
+  - Scanner detects & decodes QR successfully (track ID extracted)
+  - But `fetchTrackById()` call fails with 404 error
+  - Likely: API endpoint issue, token scope, or track ID format problem
+  - Next: Debug API call in browser console logs
 - ⬜ Route auth guards not yet implemented (anyone can access /scanner, /generator)
 - ⬜ Metadata displays in scanner (game-spoiling; remove in final version)
 - ⬜ Batch QR generation not yet implemented
@@ -876,24 +890,31 @@ gh-pages -d dist  # or manual upload of dist/ contents
 - **Imperative Utility Functions**: `spotifyPlayback.ts`, `generateQRFromTrackUrl()` for actions
   - Use functions for button clicks, API calls, data transformations
   - Example: `playTrack(uri, token)` called directly from handlePlay event
-- **Type Safety**: Verify return types when extracting functions
-  - Bug caught: `fetchTrackById()` returns `FullCardData`, not `SpotifyTrack`
-  - Always check what function returns before using in calling code
-
-**Next Steps** (Prioritized):
-1. **Fix Web Playback SDK** (investigate why ready event doesn't fire)
+- **TDebug metadata 404 error** ← BLOCKING (QR scans but fetch fails)
+   - Check browser console: Is API call being made? What's the exact error?
+   - Verify track ID format (should be 22-char alphanumeric)
+   - Check Spotify API endpoint & token scope
+   - Add retry logic with better error messages
+2. **Fix Web Playback SDK** (investigate why ready event doesn't fire)
+3. **Batch QR generation** from playlists (upload file or paste playlist URL)
+4. **Spotify search integration** (find tracks by title/artist)
+5. **Remove metadata display** from scanner (game production release)
+6. **Route auth guards** (require login for /scanner, /generator)
+7. **Fix Web Playback SDK** (investigate why ready event doesn't fire)
 2. **Batch QR generation** from playlists (upload file or paste playlist URL)
 3. **Spotify search integration** (find tracks by title/artist)
 4. **Remove metadata display** from scanner (game production release)
-5. **Route auth guards** (require login for /scanner, /generator)
-6. **PDF export** for printable QR booklets (future enhancement)
-
----
-
-**Last Updated**: March 20, 2026 (Session completed - Utilities refactored, GitHub Pages deployed)  
+5. **Route auth guards** (require Late session - QR payload refactor, SRP utilities, 404 debugging next)  
 **Status**: 
 - ✅ QR generation & scanning fully functional
-- ✅ Spotify playback working via REST API (requires app running)
+- ✅ QR payload reduced to ID-only (~3× smaller)
+- ✅ Code refactored with SRP-compliant utilities
+- ✅ GitHub Pages deployment working
+- ✅ Custom domain (chimeline.prograd.no) with SPA routing
+- ⚠️ **QR scans successfully, but metadata fetch returns 404** ← INVESTIGATING
+- ⚠️ Web Playback SDK needs debugging
+- 🔧 Scanner closes immediately on QR detection (UX improvement)
+- 🚀 Ready for metadata fetch debugging & batch geneuires app running)
 - ✅ Refactored to reusable hooks and utilities (maintainable code)
 - ✅ GitHub Pages deployment with GitHub Actions CI/CD (auto-deploy on push)
 - ✅ Custom domain (chimeline.prograd.no) with SPA routing
