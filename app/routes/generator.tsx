@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Route } from "./+types/generator";
-import { getToken, getAuthUrl } from "../lib/spotifyAuth";
+import { getToken } from "../lib/spotifyAuth";
+import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { parseSpotifyTrackId, fetchTrackById } from "../lib/spotifySearch";
 import { generateQRCode } from "../lib/qrGenerator";
 import { toMinimalCardData, type CardData } from "../lib/schemas";
@@ -19,36 +20,18 @@ export default function GeneratorPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthed, setIsAuthed] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
 
-  // Check auth on mount
+  // Check auth and redirect to login if needed
+  const isAuthed = useAuthRedirect("/generator");
+
+  // Initialize token once authenticated
   useEffect(() => {
-    const token = getToken();
-    
-    if (!token) {
-      // Redirect to login
-      const handleLogin = async () => {
-        const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-        const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
-
-        if (clientId && redirectUri) {
-          try {
-            // Pass the current path to encode in the state parameter
-            const authUrl = await getAuthUrl(clientId, redirectUri, "/generator");
-            window.location.href = authUrl;
-          } catch (err) {
-            console.error("Failed to get auth URL:", err);
-          }
-        }
-      };
-      handleLogin();
-      return;
+    if (isAuthed) {
+      const t = getToken();
+      setToken(t);
     }
-
-    setIsAuthed(true);
-    setIsChecking(false);
-  }, []);
+  }, [isAuthed]);
 
   const handleGenerateQR = async () => {
     setError(null);
@@ -106,6 +89,15 @@ export default function GeneratorPage() {
       );
     }
   };
+
+  if (!isAuthed) {
+    return (
+      <div className={styles.container}>
+        <h1>QR Code Generator</h1>
+        <p>Redirecting to Spotify login...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>

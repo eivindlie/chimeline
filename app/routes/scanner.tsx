@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Route } from "./+types/scanner";
-import { getToken, getAuthUrl } from "../lib/spotifyAuth";
+import { getToken } from "../lib/spotifyAuth";
+import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { startScanning, stopScanning } from "../lib/qrScanner";
 import type { Html5Qrcode } from "html5-qrcode";
 import type { FullCardData } from "../lib/schemas";
@@ -20,36 +21,18 @@ export default function ScannerPage() {
   const [lastScanned, setLastScanned] = useState<FullCardData | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [token, setToken] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
 
-  // Check auth and initialize token on mount (client-side only)
+  // Check auth and redirect to login if needed
+  const isAuthed = useAuthRedirect("/scanner");
+
+  // Initialize token once authenticated
   useEffect(() => {
-    const t = getToken();
-    setToken(t);
-    
-    // If no token, redirect to login
-    if (!t) {
-      const handleLogin = async () => {
-        const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-        const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
-
-        if (clientId && redirectUri) {
-          try {
-            // Pass the current path to encode in the state parameter
-            const authUrl = await getAuthUrl(clientId, redirectUri, "/scanner");
-            window.location.href = authUrl;
-          } catch (err) {
-            console.error("Failed to get auth URL:", err);
-          }
-        }
-      };
-      handleLogin();
-      return;
+    if (isAuthed) {
+      const t = getToken();
+      setToken(t);
     }
-
-    setIsInitialized(true);
-  }, []);
+  }, [isAuthed]);
 
   // Load Spotify Web Playback SDK
   useEffect(() => {
@@ -283,22 +266,11 @@ export default function ScannerPage() {
     };
   }, [isScanning, handlePlay]);
 
-  if (!isInitialized) {
+  if (!isAuthed) {
     return (
       <div className={styles.container}>
         <h1>QR Scanner</h1>
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  if (!token) {
-    return (
-      <div className={styles.container}>
-        <h1>QR Scanner</h1>
-        <div className={styles.error}>
-          Please log in first to use the scanner.
-        </div>
+        <p>Redirecting to Spotify login...</p>
       </div>
     );
   }
