@@ -96,35 +96,35 @@ export async function generateCardsPDFFromTracks(
         const rowTracks = pageTracks.slice(i, i + 3);
         const cells: Record<string, unknown>[] = rowTracks.map((track) => {
           const year = new Date(track.releaseDate).getFullYear();
-          const formattedDate = new Date(track.releaseDate).toLocaleDateString('en-US', {
-            month: 'short',
+          const formattedDate = new Date(track.releaseDate).toLocaleDateString('nb-NO', {
             day: 'numeric',
+            month: 'short',
           });
           return {
             stack: [
               {
                 text: track.title,
-                fontSize: 9,
+                fontSize: 11,
                 bold: true,
                 alignment: 'center',
                 margin: [0, 0, 0, 45],
               },
               {
                 text: formattedDate,
-                fontSize: 7,
+                fontSize: 8,
                 alignment: 'center',
                 margin: [0, 0, 0, 2],
               },
               {
                 text: year.toString(),
-                fontSize: 20,
+                fontSize: 32,
                 bold: true,
                 alignment: 'center',
                 margin: [0, 0, 0, 0],
               },
               {
                 text: track.artist,
-                fontSize: 7,
+                fontSize: 8,
                 alignment: 'center',
                 margin: [0, 45, 0, 0],
               },
