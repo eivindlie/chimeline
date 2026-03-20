@@ -19,7 +19,9 @@ export default function Setup() {
 
   const handleStartPlaying = () => {
     setStep("processing");
-    window.location.href = getSpotifyRedirectUrl();
+    // Open Spotify in a new tab (background on desktop, helps with mobile too)
+    window.open(getSpotifyRedirectUrl(), "_blank");
+    // Keep processing state visible while listening for return via visibilitychange
   };
 
   const handleReturnedFromApp = async () => {
