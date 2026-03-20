@@ -890,33 +890,72 @@ gh-pages -d dist  # or manual upload of dist/ contents
 - **Imperative Utility Functions**: `spotifyPlayback.ts`, `generateQRFromTrackUrl()` for actions
   - Use functions for button clicks, API calls, data transformations
   - Example: `playTrack(uri, token)` called directly from handlePlay event
-- **TDebug metadata 404 error** ← BLOCKING (QR scans but fetch fails)
-   - Check browser console: Is API call being made? What's the exact error?
-   - Verify track ID format (should be 22-char alphanumeric)
-   - Check Spotify API endpoint & token scope
-   - Add retry logic with better error messages
-2. **Fix Web Playback SDK** (investigate why ready event doesn't fire)
-3. **Batch QR generation** from playlists (upload file or paste playlist URL)
-4. **Spotify search integration** (find tracks by title/artist)
-5. **Remove metadata display** from scanner (game production release)
-6. **Route auth guards** (require login for /scanner, /generator)
-7. **Fix Web Playback SDK** (investigate why ready event doesn't fire)
-2. **Batch QR generation** from playlists (upload file or paste playlist URL)
-3. **Spotify search integration** (find tracks by title/artist)
-4. **Remove metadata display** from scanner (game production release)
-5. **Route auth guards** (require Late session - QR payload refactor, SRP utilities, 404 debugging next)  
-**Status**: 
+
+---
+
+## Current Status (Latest Session)
+
+### ✅ Completed Features (This Session):
+- ✅ **iOS Audio Sandbox Issue Solved**: Implemented device pre-activation pattern
+  - Problem: iOS Safari sandbox blocks Web Playback SDK iframe audio
+  - Solution: Deep-link to Spotify with silent song (4'33"), device pre-activation, explicit device targeting
+- ✅ **Device Setup Flow** (`/setup` route)
+  - Step 1: User taps "Setup Device" → deep-links to Spotify
+  - Step 2: Spotify opens with silent song (John Cage's 4'33"), user hits play
+  - Step 3: Return to browser → fetch devices → select playback device
+  - Device ID persisted in localStorage for all future playback
+- ✅ **Device Management Utilities** (`spotifyDevices.ts`)
+  - Fetch available devices from `/v1/me/player/devices`
+  - Select and persist device ID
+  - Build Spotify URIs for deep-linking
+- ✅ **OAuth Scope Updates**
+  - Added `user-read-playback-state` and `user-modify-playback-state`
+  - Required for device fetching and REST API playback targeting
+- ✅ **Explicit Device Targeting**
+  - Scanner now requires device_id before scanning
+  - REST API calls explicitly target selected device via query parameter
+  - Shows helpful setup prompt if device not configured
+- ✅ **Code Cleanup** (Logging removal)
+  - Removed all `console.debug()` calls from production code
+  - Kept `console.error()` and `console.warn()` for critical issues
+
+### ⚠️ Known Limitations:
+- **Setup is currently manual**: User must click "Setup Device" link
+  - Future improvement: Auto-trigger on first game start
+- **Spotify app must be installed**: Deep-linking relies on official app
+- **Device selection UI**: Currently shows all devices (could be improved with last-used device detection)
+
+### 📋 Files Created/Modified This Session:
+**New Files**:
+- `app/lib/spotifyDevices.ts` — Device fetching, selection, persistence
+- `app/routes/setup.tsx` — Multi-step setup UI (3 flows: welcome → linking → selecting)
+- `app/routes/setup.module.css` — Responsive styling
+
+**Modified Files**:
+- `app/lib/spotifyAuth.ts` — Added required OAuth scopes
+- `app/lib/spotifyPlayback.ts` — Optional deviceId parameter for pausePlayback()
+- `app/routes/scanner.tsx` — Device requirement check, improved error messages
+- `app/routes/_index.tsx` — Added "Setup Device" button to home page
+
+### 🎯 Next Priority (UX Improvement):
+**Automatic Setup Flow**:
+- Detect if no device ID on first visit to scanner
+- Auto-redirect to setup flow instead of showing error
+- Show progress through setup steps clearly
+- Possibly integrate into initial game start screen
+
+### 💾 Git Status:
+- Commits this session:
+  1. `refactor: remove debug logging for production-ready code`
+  2. `feat: Add iOS-friendly device setup flow with silent song activation`
+  3. `fix: Use correct Spotify track ID for 4'33" setup song`
+  4. `fix: Add required Spotify OAuth scopes for device management`
+  5. `fix: Remove /chimeline/ prefix from navigation links`
+
+### 🚀 Production Status:
 - ✅ QR generation & scanning fully functional
-- ✅ QR payload reduced to ID-only (~3× smaller)
-- ✅ Code refactored with SRP-compliant utilities
-- ✅ GitHub Pages deployment working
-- ✅ Custom domain (chimeline.prograd.no) with SPA routing
-- ⚠️ **QR scans successfully, but metadata fetch returns 404** ← INVESTIGATING
-- ⚠️ Web Playback SDK needs debugging
-- 🔧 Scanner closes immediately on QR detection (UX improvement)
-- 🚀 Ready for metadata fetch debugging & batch geneuires app running)
-- ✅ Refactored to reusable hooks and utilities (maintainable code)
-- ✅ GitHub Pages deployment with GitHub Actions CI/CD (auto-deploy on push)
-- ✅ Custom domain (chimeline.prograd.no) with SPA routing
-- ⚠️ Web Playback SDK needs debugging
-- 🚀 Ready for batch generation & search integration
+- ✅ Desktop playback working (SDK + REST API)
+- ✅ iOS playback now working (device pre-activation + REST API)
+- ✅ Custom domain deployment (chimeline.prograd.no)
+- ✅ All routes working without 404 errors
+- ✅ Code is production-ready (minimal logging, proper error handling)
