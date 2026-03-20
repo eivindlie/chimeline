@@ -8,6 +8,8 @@ const SPOTIFY_SCOPES = [
   "streaming",
   "user-read-email",
   "user-read-private",
+  "user-read-playback-state",
+  "user-modify-playback-state",
 ];
 
 const AUTH_STORAGE_KEY = "spotify_token";
