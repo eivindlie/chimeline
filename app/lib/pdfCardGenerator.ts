@@ -1,16 +1,20 @@
-import html2pdf from 'html2pdf.js';
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
 import type { CardData } from './schemas';
 import { generateQRCodeBlob } from './qrGenerator';
 
+// Initialize pdfMake with fonts
+(pdfMake as any).vfs = (pdfFonts as any).pdfMake.vfs;
+
 export interface PDFGenerationOptions {
   filename?: string;
-  margin?: number;
   playlistName?: string;
 }
 
 /**
  * Generate a PDF of card grid with proper A4 formatting directly from track data
  * Each card is 65×65mm in a 3×4 grid (12 cards per page)
+ * Uses pdfMake for direct PDF generation without canvas rendering issues
  */
 export async function generateCardsPDFFromTracks(
   tracks: CardData[],
@@ -18,19 +22,11 @@ export async function generateCardsPDFFromTracks(
 ): Promise<void> {
   const {
     filename = `chimeline-cards-${new Date().toISOString().split('T')[0]}.pdf`,
-    margin = 10,
     playlistName = 'ChimeLine',
   } = options;
 
   try {
-    // Create a temporary container for the cards
-    const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.width = '210mm';
-    document.body.appendChild(container);
-
-    // Generate all QR codes first
+    // Generate all QR codes as data URLs
     const trackQRs = new Map<string, string>();
     for (const track of tracks) {
       const qrBlob = await generateQRCodeBlob(track);
@@ -42,138 +38,78 @@ export async function generateCardsPDFFromTracks(
       trackQRs.set(`${track.spotifyUri}-${track.title}`, url);
     }
 
-    // Build the HTML for the PDF
-    let html = `
-      <div style="
-        width: 210mm;
-        height: 297mm;
-        margin: 0;
-        padding: ${margin}mm;
-        background: white;
-        font-family: Arial, sans-serif;
-        box-sizing: border-box;
-      ">
-        <div style="
-          padding: 10mm;
-          border-bottom: 1px solid #f0f0f0;
-          text-align: center;
-          font-size: 8pt;
-          color: #999;
-          line-height: 1.3;
-          margin-bottom: 10mm;
-        ">
-          PRINTING & CUTTING GUIDE: Print this PDF. Stack pages. Use a guillotine 
-          or ruler to cut vertically at crop marks (3 cuts), then horizontally (4 cuts).
-        </div>
-        
-        <div style="
-          display: grid;
-          grid-template-columns: repeat(3, 65mm);
-          gap: 5mm;
-          margin: 0;
-          padding: 0;
-        ">
-    `;
+    console.log(`Generated QR codes for ${trackQRs.size} tracks`);
 
-    // Add cards to HTML
-    for (const track of tracks) {
-      const qrUrl = trackQRs.get(`${track.spotifyUri}-${track.title}`);
-      const year = track.releaseDate.substring(0, 4);
-      const date = new Date(track.releaseDate).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+    // Build table rows: 3 columns per row, with QR code images
+    const tableBody: any[] = [];
+
+    for (let i = 0; i < tracks.length; i += 3) {
+      const rowTracks = tracks.slice(i, i + 3);
+      const cells: any[] = rowTracks.map((track) => {
+        const qrUrl = trackQRs.get(`${track.spotifyUri}-${track.title}`);
+        return {
+          image: qrUrl || '',
+          fit: [184, 184], // ~65mm at 72dpi
+          alignment: 'center' as const,
+          border: [1, 1, 1, 1] as [number, number, number, number],
+          borderColor: '#f0f0f0',
+          margin: [3, 3, 3, 3] as [number, number, number, number],
+        };
       });
 
-      html += `
-        <div style="
-          width: 65mm;
-          height: 65mm;
-          border: 1px solid #eee;
-          border-radius: 2px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: white;
-          padding: 3mm;
-          box-sizing: border-box;
-          position: relative;
-          page-break-inside: avoid;
-        ">
-          ${
-            qrUrl
-              ? `<img src="${qrUrl}" alt="QR for ${track.title}" style="
-                  max-width: 100%;
-                  max-height: 100%;
-                  border-radius: 2px;
-                " />`
-              : ''
-          }
-        </div>
-      `;
+      // Pad with empty cells if row has fewer than 3 items (last row)
+      while (cells.length < 3) {
+        cells.push({
+          text: '',
+          border: [1, 1, 1, 1] as [number, number, number, number],
+          borderColor: '#f0f0f0',
+        });
+      }
+
+      tableBody.push(cells);
     }
 
-    html += `
-        </div>
-      </div>
-    `;
-
-    container.innerHTML = html;
-
-    // Generate PDF from the temporary container
-    const pdfOptions = {
-      margin: margin,
-      filename,
-      image: { type: 'png', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, allowTaint: true },
-      jsPDF: {
-        format: 'a4',
-        orientation: 'portrait',
-        unit: 'mm',
-      },
-      pagebreak: { mode: 'avoid-all' },
+    // Create the document definition
+    const docDef: any = {
+      pageSize: 'A4',
+      pageMargins: [10, 10, 10, 10],
+      content: [
+        {
+          text: 'PRINTING & CUTTING GUIDE',
+          fontSize: 9,
+          color: '#999',
+          alignment: 'center',
+          margin: [0, 0, 0, 5],
+          bold: true,
+        },
+        {
+          text: 'Print this document. Stack pages. Cut vertically at column dividers (2 cuts), then horizontally at row dividers (3 cuts).',
+          fontSize: 7,
+          color: '#999',
+          alignment: 'center',
+          margin: [0, 0, 0, 15],
+        },
+        {
+          table: {
+            widths: ['*', '*', '*'], // 3 equal columns
+            body: tableBody,
+            headerRows: 0,
+          },
+          layout: {
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => '#f0f0f0',
+            vLineColor: () => '#f0f0f0',
+          },
+        },
+      ],
     };
 
-    await html2pdf().set(pdfOptions).from(container).save();
+    // Generate and download the PDF
+    const pdf = (pdfMake as any).createPdf(docDef);
+    pdf.download(filename);
 
-    // Cleanup
-    document.body.removeChild(container);
-  } catch (error) {
-    console.error('PDF generation failed:', error);
-    throw new Error(
-      `Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
-  }
-}
-
-/**
- * Generate a PDF from an existing DOM element
- */
-export async function generateCardsPDF(
-  htmlElement: HTMLElement,
-  tracks: CardData[],
-  options: PDFGenerationOptions = {}
-): Promise<void> {
-  const {
-    filename = `chimeline-cards-${new Date().toISOString().split('T')[0]}.pdf`,
-    margin = 10,
-  } = options;
-
-  const pdfOptions = {
-    margin: margin,
-    filename,
-    image: { type: 'png', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, allowTaint: true },
-    jsPDF: {
-      format: 'a4',
-      orientation: 'portrait',
-      unit: 'mm',
-    },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-  };
-
-  try {
-    await html2pdf().set(pdfOptions).from(htmlElement).save();
+    console.log(`PDF generated successfully: ${filename}`);
   } catch (error) {
     console.error('PDF generation failed:', error);
     throw new Error(

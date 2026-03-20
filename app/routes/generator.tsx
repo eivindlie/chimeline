@@ -171,7 +171,6 @@ export default function GeneratorPage() {
             setMode("single");
             setError(null);
             setPlaylistTracks([]);
-            setPlaylistQRs([]);
           }}
         >
           Single Track
