@@ -135,11 +135,7 @@ export default function ScannerPage() {
         const fullData = await fetchTrackMetadata(trackId, token);
         console.debug("Scanner: Got metadata:", fullData.title);
         setLastScanned(fullData);
-
-        // Step 3: Auto-play the track
-        console.debug("Scanner: Starting playback...");
-        await handlePlay(fullData);
-        console.debug("Scanner: Playback started");
+        setIsLoadingTrack(false);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Scanner error:", message);
@@ -156,7 +152,7 @@ export default function ScannerPage() {
       // Cleanup: ensure scanner stops if component unmounts
       stopScanning();
     };
-  }, [isScanning, handlePlay, token]);
+  }, [isScanning, token]);
 
   if (!isAuthed) {
     return (
@@ -205,7 +201,7 @@ export default function ScannerPage() {
 
       {lastScanned && !isLoadingTrack && (
         <div className={styles.trackInfo}>
-          <h2>Last Scanned</h2>
+          <h2>✅ Track Loaded</h2>
           <p>
             <strong>Title:</strong> {lastScanned.title}
           </p>
@@ -215,24 +211,9 @@ export default function ScannerPage() {
           <p>
             <strong>Release Date:</strong> {lastScanned.releaseDate}
           </p>
-
-          <div className={styles.controls}>
-            {!isPlaying ? (
-              <button
-                onClick={() => handlePlay(lastScanned)}
-                className={styles.button}
-              >
-                Play
-              </button>
-            ) : (
-              <button onClick={handlePause} className={styles.buttonPause}>
-                Pause
-              </button>
-            )}
-            <button onClick={handleStop} className={styles.buttonStop}>
-              Stop
-            </button>
-          </div>
+          <p style={{ marginTop: "12px", fontSize: "12px", color: "#666" }}>
+            Metadata fetch successful! Playback coming soon.
+          </p>
         </div>
       )}
     </div>
