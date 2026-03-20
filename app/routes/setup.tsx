@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuthRedirect } from "~/lib/useAuthRedirect";
-import { fetchAvailableDevices, getSelectedDeviceId, saveSelectedDeviceId, SILENCE_TRACK_ID } from "~/lib/spotifyDevices";
+import { fetchAvailableDevices, getSelectedDeviceId, saveSelectedDeviceId, SETUP_TRACK_ID } from "~/lib/spotifyDevices";
 import styles from "./setup.module.css";
 
 export default function Setup() {
@@ -13,8 +13,8 @@ export default function Setup() {
   const isAuthed = useAuthRedirect("/setup");
 
   const getSpotifyRedirectUrl = () => {
-    const baseUrl = `https://open.spotify.com/track/${SILENCE_TRACK_ID}`;
-    return baseUrl;
+    // Open Chariots of Fire in Spotify - iconic theme, user confirms device works
+    return `https://open.spotify.com/track/${SETUP_TRACK_ID}`;
   };
 
   const handleStartPlaying = () => {
@@ -113,8 +113,8 @@ export default function Setup() {
             <p>To play songs during the game, we need to set up your Spotify device:</p>
             <ol>
               <li><strong>Click "Start Playing!"</strong> below</li>
-              <li>Spotify will open with a 4-minute silent song</li>
-              <li>Let it play (or just start it and quickly return)</li>
+              <li>Spotify will open with Vangelis' "Chariots of Fire"</li>
+              <li>Let it play so you can confirm your speakers work</li>
               <li>Return to ChimeLine and we'll automatically set up your device</li>
             </ol>
             <p className={styles.note}>💡 This only needs to happen once!</p>
@@ -129,7 +129,7 @@ export default function Setup() {
         <div className={styles.card}>
           <div className={styles.spinner}></div>
           <h2>Opening Spotify...</h2>
-          <p>Let the silent song play, then return to ChimeLine.</p>
+          <p>Listen to Chariots of Fire and confirm your speakers work.</p>
         </div>
       )}
 

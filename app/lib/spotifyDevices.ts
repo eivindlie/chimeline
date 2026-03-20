@@ -70,4 +70,6 @@ export function buildSpotifyTrackUri(trackId: string): string {
  * The silence song - John Cage's 4'33"
  * Perfect for device setup (silent, doesn't spoil gameplay)
  */
-export const SILENCE_TRACK_ID = "2bNCdW4rLnCTzgqUXTTDO1";
+// Track to play during device setup - users confirm device/speakers work
+// Vangelis - Chariots of Fire (iconic 80s theme, recognizable instantly)
+export const SETUP_TRACK_ID = "6GxhckZeqoWNF9n9XS91HS";
