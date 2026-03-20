@@ -101,58 +101,38 @@ export async function generateCardsPDFFromTracks(
             day: 'numeric',
           });
           return {
-            table: {
-              widths: ['100%'],
-              heights: [45, 90, 50],
-              body: [
-                [
-                  {
-                    text: track.title,
-                    fontSize: 9,
-                    bold: true,
-                    alignment: 'center',
-                    verticalAlignment: 'top',
-                    border: [0, 0, 0, 0],
-                    margin: [5, 5, 5, 0],
-                  },
-                ],
-                [
-                  {
-                    stack: [
-                      {
-                        text: formattedDate,
-                        fontSize: 7,
-                        alignment: 'center',
-                        margin: [0, 5, 0, 10],
-                      },
-                      {
-                        text: year.toString(),
-                        fontSize: 20,
-                        bold: true,
-                        alignment: 'center',
-                        margin: [0, 0, 0, 0],
-                      },
-                    ],
-                    verticalAlignment: 'middle',
-                    border: [0, 0, 0, 0],
-                    margin: [0, 0, 0, 0],
-                  },
-                ],
-                [
-                  {
-                    text: track.artist,
-                    fontSize: 7,
-                    alignment: 'center',
-                    verticalAlignment: 'bottom',
-                    border: [0, 0, 0, 0],
-                    margin: [5, 0, 5, 5],
-                  },
-                ],
-              ],
-            },
+            stack: [
+              {
+                text: track.title,
+                fontSize: 9,
+                bold: true,
+                alignment: 'center',
+                margin: [0, 0, 0, 45],
+              },
+              {
+                text: formattedDate,
+                fontSize: 7,
+                alignment: 'center',
+                margin: [0, 0, 0, 2],
+              },
+              {
+                text: year.toString(),
+                fontSize: 20,
+                bold: true,
+                alignment: 'center',
+                margin: [0, 0, 0, 0],
+              },
+              {
+                text: track.artist,
+                fontSize: 7,
+                alignment: 'center',
+                margin: [0, 45, 0, 0],
+              },
+            ],
+            verticalAlignment: 'middle',
             border: [1, 1, 1, 1],
             borderColor: '#e0e0e0',
-            margin: [0, 0, 0, 0],
+            margin: [5, 5, 5, 5],
           };
         });
 
