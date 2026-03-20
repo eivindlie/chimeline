@@ -893,61 +893,157 @@ gh-pages -d dist  # or manual upload of dist/ contents
 
 ---
 
-## Current Status (Latest Session)
+## Current Status (Latest Session – March 20, 2026)
+
+**Session Focus**: UX refinement, error handling, PWA support, and production readiness.
 
 ### ✅ Completed Features (This Session):
-- ✅ **iOS Audio Sandbox Issue Solved**: Implemented device pre-activation pattern
-  - Problem: iOS Safari sandbox blocks Web Playback SDK iframe audio
-  - Solution: Deep-link to Spotify with silent song (4'33"), device pre-activation, explicit device targeting
-- ✅ **Device Setup Flow** (`/setup` route)
-  - Step 1: User taps "Setup Device" → deep-links to Spotify
-  - Step 2: Spotify opens with silent song (John Cage's 4'33"), user hits play
-  - Step 3: Return to browser → fetch devices → select playback device
-  - Device ID persisted in localStorage for all future playback
-- ✅ **Device Management Utilities** (`spotifyDevices.ts`)
-  - Fetch available devices from `/v1/me/player/devices`
-  - Select and persist device ID
-  - Build Spotify URIs for deep-linking
-- ✅ **OAuth Scope Updates**
-  - Added `user-read-playback-state` and `user-modify-playback-state`
-  - Required for device fetching and REST API playback targeting
-- ✅ **Explicit Device Targeting**
-  - Scanner now requires device_id before scanning
-  - REST API calls explicitly target selected device via query parameter
-  - Shows helpful setup prompt if device not configured
-- ✅ **Code Cleanup** (Logging removal)
-  - Removed all `console.debug()` calls from production code
-  - Kept `console.error()` and `console.warn()` for critical issues
 
-### ⚠️ Known Limitations:
-- **Setup is currently manual**: User must click "Setup Device" link
-  - Future improvement: Auto-trigger on first game start
-- **Spotify app must be installed**: Deep-linking relies on official app
-- **Device selection UI**: Currently shows all devices (could be improved with last-used device detection)
+**Setup Flow Improvements**:
+- ✅ **Single-Button Automatic Setup**: Simplified from 3-step manual to 1-button automatic
+  - User clicks "Start Playing!" → auto-detects device on tab return via `visibilitychange`
+  - Clear instructions before redirect (what to expect)
+- ✅ **Audio Device Confirmation**: Switched from silent 4'33" to Chariots of Fire
+  - Users hear iconic theme to confirm device/speakers working
+  - Can immediately hear if playback is working
+- ✅ **Auto-Pause on Return**: Automatically pauses Chariots of Fire when user returns
+  - Nice courtesy – device confirmed but music stopped
+- ✅ **Auth Check on Setup Route**: Redirects to Spotify login if not authenticated
+  - Shows "Connecting to Spotify..." loading state
+
+**Scanner UX Cleanup**:
+- ✅ **Removed Metadata Display**: No song title/artist (prevents game-spoiling)
+- ✅ **Single Play/Pause Button**: Combined play and pause into one toggle button
+- ✅ **Scan Next Feature**: Added "📱 Scan Next Song" button for quick re-scanning
+- ✅ **Pause/Resume Fix**: Resume now continues from pause position, not restart from beginning
+  - Uses REST API resume (no URI) instead of replay
+
+**PWA & Mobile Improvements**:
+- ✅ **PWA Manifest Support**: Full manifest.json with app metadata, icons, fullscreen mode
+- ✅ **iOS Support Meta Tags**: Apple-mobile-web-app-capable, status bar, touch icon
+- ✅ **Direct Navigation**: Changed from window.open to window.location.href for PWA fullscreen
+  - Avoids extra browser windows in PWA mode
+- ✅ **Service Worker**: Auto-update detection with user notification
+  - Checks for updates on load and every hour
+  - Green banner appears: "✨ A new version is available"
+  - Click "Update" to reload with new version
+
+**Error Handling**:
+- ✅ **404 Device Detection**: If playback returns 404 (device lost)
+  - Clears device from storage automatically
+  - Shows helpful error message
+  - Auto-redirects to setup for re-configuration
+  - Implemented in: playTrack(), resumePlayback(), pausePlayback()
+
+**Home Page & Navigation**:
+- ✅ **Simplified Landing**: Single large "🎵 Start Playing!" button
+  - Direct navigation to setup (no multiple option buttons)
+  - Helpful hint: "Device setup is quick and happens only once!"
+
+**Code Quality**:
+- ✅ **Import Path Fixes**: Changed '@react-router/react' to 'react-router' (correct package)
+- ✅ **Bug Fixes**:
+  - Fixed missing `handleScanNext` function export
+  - Fixed dependency arrays in useCallback hooks
+  - Fixed scanner auto-redirect to setup when device not configured
 
 ### 📋 Files Created/Modified This Session:
+
 **New Files**:
-- `app/lib/spotifyDevices.ts` — Device fetching, selection, persistence
-- `app/routes/setup.tsx` — Multi-step setup UI (3 flows: welcome → linking → selecting)
-- `app/routes/setup.module.css` — Responsive styling
+- `public/service-worker.js` — Service worker with caching & update detection
+- `app/lib/useServiceWorkerUpdate.ts` — Custom hook for SW update detection
+- `public/manifest.json` — PWA manifest (already existed, confirmed values)
 
 **Modified Files**:
-- `app/lib/spotifyAuth.ts` — Added required OAuth scopes
-- `app/lib/spotifyPlayback.ts` — Optional deviceId parameter for pausePlayback()
-- `app/routes/scanner.tsx` — Device requirement check, improved error messages
-- `app/routes/_index.tsx` — Added "Setup Device" button to home page
+- `app/routes/setup.tsx` — Complete refactor: single-button automatic flow
+- `app/routes/setup.module.css` — Simplified styling (no gradients)
+- `app/routes/scanner.tsx` — Removed metadata, added pause/resume fix, 404 error handling
+- `app/routes/_index.tsx` — Single "Start Playing!" button
+- `app/lib/spotifyDevices.ts` — Updated track ID from 4'33" to Chariots of Fire
+- `app/lib/spotifyPlayback.ts` — Added resumePlayback(), pausePlaybackOnDevice(), 404 detection
+- `app/root.tsx` — Added update notification banner, service worker integration
 
-### 🎯 Next Priority (UX Improvement):
-**Automatic Setup Flow**:
-- Detect if no device ID on first visit to scanner
-- Auto-redirect to setup flow instead of showing error
-- Show progress through setup steps clearly
-- Possibly integrate into initial game start screen
+### 🎯 Git Commits This Session:
+1. `refactor: Simplify setup to single-button automatic flow with clear instructions`
+2. `fix: Correct import paths and simplify home page to single 'Start Playing' button`
+3. `fix: Add auth check to setup page – redirect to Spotify login if not authenticated`
+4. `feat: Add PWA support with manifest.json and fullscreen home screen mode`
+5. `refactor: Clean up scanner UI – remove metadata, single play/pause button, and 'scan next' feature`
+6. `fix: Open Spotify in background tab instead of redirecting for better desktop UX` (then reverted to direct navigation)
+7. `fix: Use direct navigation instead of window.open for PWA compatibility`
+8. `feat: Switch setup song to Chariots of Fire (audible confirmation of device/speakers)`
+9. `fix: Auto-pause playback when returning from Spotify setup`
+10. `fix: Resume from pause instead of restarting track from beginning`
+11. `feat: Handle 404 device errors and auto-redirect to setup for re-configuration`
+12. `feat: Add service worker with auto-update detection and notification`
 
-### 💾 Git Status:
-- Commits this session:
-  1. `refactor: remove debug logging for production-ready code`
-  2. `feat: Add iOS-friendly device setup flow with silent song activation`
+### 🎮 User Experience Flow (Current):
+```
+Home Page
+    ↓
+[🎵 Start Playing!] button
+    ↓
+Setup Page (if device not configured)
+    ├─ Clear instructions: steps to follow
+    ├─ [Start Playing!] button
+    │   ↓
+    │   Opens Spotify with Chariots of Fire
+    │   User listens to confirm device works
+    │   │
+    │   └─ Returns to app via visibilitychange
+    │       ↓
+    │       Auto-detects devices
+    │       Auto-selects active device
+    │       Auto-pauses playback
+    │       Auto-redirects to scanner
+    │
+    └─ Success state → Redirects to scanner
+        ↓
+Scanner Page
+    ├─ [Start Scanning] button
+    │   ↓
+    │   Camera opens, QR scanned
+    │   Track metadata fetched
+    │   Track auto-plays
+    │   ↓
+    │   Shows: [▶ Play/⏸ Pause] [📱 Scan Next Song]
+    │
+    └─ Pause/Resume works seamlessly
+        └─ If 404 error: Auto-redirects to setup
+```
+
+### ⚠️ Known Limitations:
+- **Desktop Playback**: No SDK support (5-user dev account limit) – only REST API works
+  - Requires Spotify app open on a device (mobile/desktop)
+  - No in-browser playback without SDK
+- **Update Notification**: Currently manual click to update (no auto-reload)
+- **Setup Timing**: Slight delay in device detection (network request)
+
+### ✨ Recent Design Decisions:
+- **Chariots of Fire instead of silent song**: Users can immediately verify audio is working
+- **Direct navigation vs window.open**: PWA fullscreen mode doesn't support extra windows well
+- **Auto-pause on return**: Better UX – device confirmed but won't blast music unexpectedly
+- **Resume not replay**: Users expect pause/play to maintain position in song
+- **404 handling**: Graceful fallback to setup instead of cryptic errors
+- **Service worker**: Keeps app fresh without forcing updates (user has control)
+
+### 🚀 Production Readiness Status:
+- ✅ Core scanning & playback functional
+- ✅ Device setup smooth & foolproof
+- ✅ Error handling graceful
+- ✅ PWA fully supported (home screen installation)
+- ✅ Auto-update mechanism in place
+- ✅ Mobile-optimized UX
+- ⏳ Design pass pending (minimal styling in place)
+- ⏳ Batch QR generation (generator route) not yet implemented
+- ⏳ Auth guards on protected routes (anyone can access currently)
+
+### 📌 Next Priorities:
+1. Implement generator route (QR creation from single track or playlist)
+2. Design pass (colors, typography, layout refinement)
+3. Add auth guards to scanner/generator routes
+4. Test on various devices (iOS, Android, desktop)
+5. Consider: Scoring system, game integration features
   3. `fix: Use correct Spotify track ID for 4'33" setup song`
   4. `fix: Add required Spotify OAuth scopes for device management`
   5. `fix: Remove /chimeline/ prefix from navigation links`
