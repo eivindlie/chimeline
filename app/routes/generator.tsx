@@ -6,7 +6,7 @@ import { generateQRFromTrackUrl } from "../lib/generateQRFromTrackUrl";
 import { downloadQRFromDataUrl, generateQRCodeBlob } from "../lib/qrGenerator";
 import { toTrackIdentifier, type CardData } from "../lib/schemas";
 import { parsePlaylistUrl, fetchPlaylistTracks } from "../lib/spotifyPlaylist";
-import { CardPreview } from "./generator/CardPreview";
+import { generateCardsPDFFromTracks } from "../lib/pdfCardGenerator";
 import styles from "./generator.module.css";
 
 export function meta({}: Route.MetaArgs) {
@@ -28,10 +28,6 @@ export default function GeneratorPage() {
   // Playlist state
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [playlistTracks, setPlaylistTracks] = useState<CardData[]>([]);
-  const [playlistQRs, setPlaylistQRs] = useState<
-    Array<{ track: CardData; qrUrl: string }>
-  >([]);
-  const [showCardPreview, setShowCardPreview] = useState(false);
 
   // Shared state
   const [isLoading, setIsLoading] = useState(false);
@@ -104,12 +100,10 @@ export default function GeneratorPage() {
       // Fetch all tracks from playlist
       const tracks = await fetchPlaylistTracks(playlistId, token);
       setPlaylistTracks(tracks);
-      setShowCardPreview(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       setError(message);
       setPlaylistTracks([]);
-      setShowCardPreview(false);
     } finally {
       setIsLoading(false);
     }
@@ -127,6 +121,32 @@ export default function GeneratorPage() {
       const message = err instanceof Error ? err.message : "Unknown error";
       console.error("Download error:", message);
       setError(message);
+    }
+  };
+
+  const handleGeneratePDF = async () => {
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      if (playlistTracks.length === 0) {
+        throw new Error("No tracks to generate PDF from");
+      }
+
+      const playlistName = playlistUrl
+        .split("/")
+        .pop()
+        ?.split("?")[0] || "ChimeLine_Playlist";
+
+      await generateCardsPDFFromTracks(playlistTracks, {
+        playlistName,
+        filename: `${playlistName}_${new Date().toISOString().split('T')[0]}.pdf`,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setError(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -297,23 +317,14 @@ export default function GeneratorPage() {
                 ))}
               </div>
 
-              {!showCardPreview && (
+              {playlistTracks.length > 0 && (
                 <button
-                  onClick={() => setShowCardPreview(true)}
+                  onClick={handleGeneratePDF}
+                  disabled={isLoading}
                   className={styles.button}
                 >
-                  📇 Generate Printable Cards
+                  {isLoading ? "Generating PDF..." : "📥 Download PDF"}
                 </button>
-              )}
-
-              {showCardPreview && playlistTracks.length > 0 && (
-                <CardPreview
-                  tracks={playlistTracks}
-                  playlistName={playlistUrl
-                    .split("/")
-                    .pop()
-                    ?.split("?")[0] || "ChimeLine_Playlist"}
-                />
               )}
             </div>
           )}

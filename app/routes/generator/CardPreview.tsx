@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { CardData } from "../../lib/schemas";
 import { generateQRCodeBlob } from "../../lib/qrGenerator";
+import { generateCardsPDF } from "../../lib/pdfCardGenerator";
 import {
   layoutCardsForPrint,
   getCardLayoutInfo,
@@ -20,8 +21,10 @@ export function CardPreview({
   playlistName = "ChimeLine_Playlist",
   onPdfGenerate,
 }: CardPreviewProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [cardQRs, setCardQRs] = useState<Map<string, string>>(new Map());
   const [isGeneratingQRs, setIsGeneratingQRs] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [pageLayout, setPageLayout] = useState<CardPage[]>(
     layoutCardsForPrint(tracks)
   );
@@ -60,14 +63,25 @@ export function CardPreview({
   const pageDims = getPageDimensions();
   const allQRsLoaded = cardQRs.size === tracks.length;
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadPDF = async () => {
+    if (!containerRef.current) return;
+    
+    setIsGeneratingPDF(true);
+    try {
+      const filename = `${playlistName || 'chimeline-cards'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      await generateCardsPDF(containerRef.current, tracks, { filename });
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      alert('Failed to generate PDF. Check console for details.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   return (
     <div className={styles.container}>
       {/* Web Preview Section */}
-      <div className={styles.webPreview}>
+      <div className={styles.webPreview} ref={containerRef}>
         <h3>Preview ({allQRsLoaded ? "Ready" : "Loading QRs..."})</h3>
         <p className={styles.previewInfo}>
           {pageLayout.length} page{pageLayout.length !== 1 ? "s" : ""} •{" "}
@@ -190,11 +204,11 @@ export function CardPreview({
       {/* Action buttons */}
       <div className={styles.actionButtons}>
         <button
-          onClick={handlePrint}
-          disabled={isGeneratingQRs || cardQRs.size === 0}
+          onClick={handleDownloadPDF}
+          disabled={isGeneratingQRs || isGeneratingPDF || cardQRs.size === 0}
           className={styles.printButton}
         >
-          🖨️ Print Cards
+          {isGeneratingPDF ? "Generating PDF..." : "📥 Download PDF"}
         </button>
       </div>
     </div>
