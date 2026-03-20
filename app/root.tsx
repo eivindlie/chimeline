@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  Link,
 } from "react-router";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
@@ -46,10 +47,29 @@ export default function App() {
     }
   }, [navigate]);
 
+  const handleLogout = () => {
+    // Clear all Spotify and app storage
+    localStorage.removeItem("spotify_token");
+    localStorage.removeItem("spotify_user");
+    localStorage.removeItem("spotify_pkce_verifier");
+    localStorage.removeItem("spotify_oauth_state");
+    localStorage.removeItem("chimeline_selected_device");
+    localStorage.removeItem("auth_redirect_to");
+    sessionStorage.removeItem("redirect");
+    
+    // Redirect to home
+    navigate("/");
+  };
+
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        <h1>ChimeLine</h1>
+        <Link to="/" className={styles.headerTitle}>
+          <h1>ChimeLine</h1>
+        </Link>
+        <button onClick={handleLogout} className={styles.logoutButton}>
+          Logout
+        </button>
       </header>
       <main className={styles.main}>
         <Outlet />
@@ -78,7 +98,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        <h1>ChimeLine</h1>
+        <Link to="/" className={styles.headerTitle}>
+          <h1>ChimeLine</h1>
+        </Link>
       </header>
       <main className={styles.main}>
         <h2>{message}</h2>

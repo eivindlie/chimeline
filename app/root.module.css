@@ -8,12 +8,46 @@
   background-color: #f3f4f6;
   padding: 1rem;
   border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.header h1 {
+.headerTitle {
+  text-decoration: none;
+  color: inherit;
+}
+
+.headerTitle h1 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
+  color: #191414;
+}
+
+.headerTitle:hover h1 {
+  color: #1DB954;
+}
+
+.logoutButton {
+  padding: 0.5rem 1rem;
+  background-color: #191414;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logoutButton:hover {
+  background-color: #1DB954;
+  transform: scale(1.05);
+}
+
+.logoutButton:active {
+  transform: scale(0.98);
 }
 
 .main {
