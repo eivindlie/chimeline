@@ -1,6 +1,19 @@
 import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
 import type { CardData } from './schemas';
 import { generateQRCodeBlob } from './qrGenerator';
+
+// Initialize pdfMake with fonts - use dynamic assignment to avoid type issues
+if (typeof window !== 'undefined') {
+  try {
+    const vfsData = (pdfFonts as any)?.pdfMake?.vfs || (pdfFonts as any).vfs;
+    if (vfsData) {
+      (pdfMake as any).vfs = vfsData;
+    }
+  } catch (e) {
+    console.warn('Could not initialize pdfMake VFS:', e);
+  }
+}
 
 export interface PDFGenerationOptions {
   filename?: string;
@@ -34,7 +47,7 @@ export async function generateCardsPDFFromTracks(
       trackQRs.set(`${track.spotifyUri}-${track.title}`, url);
     }
 
-    console.log(`Generated QR codes for ${trackQRs.size} tracks`);
+    console.log(`[pdfCardGenerator] Generated QR codes for ${trackQRs.size} tracks`);
 
     // Build table rows: 3 columns per row, with QR code images
     const tableBody: any[] = [];
@@ -69,6 +82,9 @@ export async function generateCardsPDFFromTracks(
     const docDef: any = {
       pageSize: 'A4',
       pageMargins: [10, 10, 10, 10],
+      defaultStyle: {
+        font: 'Helvetica',
+      },
       content: [
         {
           text: 'PRINTING & CUTTING GUIDE',
