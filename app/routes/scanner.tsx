@@ -200,7 +200,7 @@ export default function ScannerPage() {
           <p>No Spotify device configured</p>
         </div>
         <p>Before you can scan QR codes, you need to complete the device setup:</p>
-        <a href="/chimeline/" className={styles.button}>
+        <a href="/" className={styles.button}>
           Go Home & Setup Device
         </a>
       </div>

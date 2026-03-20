@@ -81,7 +81,7 @@ export default function SetupPage() {
     saveSelectedDeviceId(deviceId);
     setSelectedDevice(deviceId);
     // Redirect to scanner
-    window.location.href = "/chimeline/scanner";
+    window.location.href = "/scanner";
   };
 
   if (!isAuthed) {
