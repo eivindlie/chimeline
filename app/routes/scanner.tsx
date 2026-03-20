@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "@react-router/react";
 import type { Route } from "./+types/scanner";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
@@ -18,6 +19,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function ScannerPage() {
+  const navigate = useNavigate();
   const [isScanning, setIsScanning] = useState(false);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,8 +39,13 @@ export default function ScannerPage() {
       
       const savedDeviceId = getSelectedDeviceId();
       setSelectedDeviceId(savedDeviceId);
+      
+      // Redirect to setup if device not selected
+      if (!savedDeviceId) {
+        navigate("/setup");
+      }
     }
-  }, [isAuthed]);
+  }, [isAuthed, navigate]);
 
   // Manage Spotify playback SDK
   const { playerReady, isPlaying: sdkIsPlaying, player, deviceId, error: playerError } = useSpotifyPlayer(
