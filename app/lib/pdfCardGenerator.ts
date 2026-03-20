@@ -78,10 +78,18 @@ export async function generateCardsPDFFromTracks(
       tableBody.push(cells);
     }
 
-    // Create the document definition
+    // Create the document definition with proper font definitions
     const docDef: any = {
       pageSize: 'A4',
       pageMargins: [10, 10, 10, 10],
+      fonts: {
+        Helvetica: {
+          normal: 'Helvetica',
+          bold: 'Helvetica-Bold',
+          italics: 'Helvetica-Oblique',
+          bolditalics: 'Helvetica-BoldOblique',
+        },
+      },
       defaultStyle: {
         font: 'Helvetica',
       },
