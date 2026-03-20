@@ -1,10 +1,6 @@
 import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
 import type { CardData } from './schemas';
 import { generateQRCodeBlob } from './qrGenerator';
-
-// Initialize pdfMake with fonts
-(pdfMake as any).vfs = (pdfFonts as any).pdfMake.vfs;
 
 export interface PDFGenerationOptions {
   filename?: string;
