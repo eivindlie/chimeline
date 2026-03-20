@@ -79,6 +79,7 @@ export async function generateCardsPDFFromTracks(
     }
 
     // Build song title table rows: 3 columns per row
+    // IMPORTANT: Reverse order for correct double-sided printing (flip on long edge)
     const titleTableBody: any[] = [];
     for (let i = 0; i < tracks.length; i += 3) {
       const rowTracks = tracks.slice(i, i + 3);
@@ -106,20 +107,25 @@ export async function generateCardsPDFFromTracks(
       titleTableBody.push(cells);
     }
 
+    // Reverse rows and columns for long-edge flip alignment
+    const reversedTitleBody = titleTableBody
+      .reverse() // Reverse row order
+      .map((row) => [...row].reverse()); // Reverse column order in each row
+
     // Create the document definition with both pages
     const docDef: any = {
       pageSize: 'A4',
       pageMargins: [12, 10, 12, 10], // left, top, right, bottom - balanced margins
       content: [
         {
-          text: 'PAGE 1: QR CODES (Print & Cut)',
+          text: 'PAGE 1: QR CODES (Print First)',
           fontSize: 10,
           color: '#666',
           alignment: 'center',
           margin: [0, 0, 0, 3],
         },
         {
-          text: 'Print this document. Stack pages. Cut vertically (2 cuts), then horizontally (3 cuts).',
+          text: 'Print this page. After printing, flip the paper on the long edge and load back into printer to print page 2. Then cut all cards.',
           fontSize: 8,
           color: '#999',
           alignment: 'center',
@@ -151,7 +157,7 @@ export async function generateCardsPDFFromTracks(
           margin: [0, 0, 0, 3],
         },
         {
-          text: 'Print & cut these cards same as page 1. Glue back-to-back with page 1 cards.',
+          text: 'Flip page 1 on the long edge (like turning a page in a book), then print this side. Cut the same way. Glue back-to-back with page 1 cards.',
           fontSize: 8,
           color: '#999',
           alignment: 'center',
@@ -160,8 +166,8 @@ export async function generateCardsPDFFromTracks(
         {
           table: {
             widths: ['*', '*', '*'], // 3 equal columns
-            heights: new Array(titleTableBody.length).fill(185), // 65mm ≈ 185 points, same as QR side
-            body: titleTableBody,
+            heights: new Array(reversedTitleBody.length).fill(185), // 65mm ≈ 185 points, same as QR side
+            body: reversedTitleBody,
             headerRows: 0,
           },
           layout: {
