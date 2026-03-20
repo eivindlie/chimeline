@@ -1,6 +1,6 @@
 import { parseSpotifyTrackId, fetchTrackById } from "./spotifySearch";
 import { generateQRCode } from "./qrGenerator";
-import { toMinimalCardData, type CardData } from "./schemas";
+import type { CardData } from "./schemas";
 
 /**
  * Generate QR code from a Spotify track URL/URI (imperative function)
@@ -25,11 +25,11 @@ export async function generateQRFromTrackUrl(
     );
   }
 
-  // Fetch track metadata
-  const track = await fetchTrackById(trackId, token);
-  const cardData = toMinimalCardData(track);
+  // Fetch track metadata from Spotify API
+  // fetchTrackById already returns FullCardData (converted from SpotifyTrack)
+  const cardData = await fetchTrackById(trackId, token);
 
-  // Generate QR code
+  // Generate QR code (handles minimization internally)
   const qrUrl = await generateQRCode(cardData);
 
   return { cardData, qrUrl };
