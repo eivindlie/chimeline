@@ -20,9 +20,9 @@ export default function Setup() {
 
   const handleStartPlaying = () => {
     setStep("processing");
-    // Open Spotify in a new tab (background on desktop, helps with mobile too)
-    window.open(getSpotifyRedirectUrl(), "_blank");
-    // Keep processing state visible while listening for return via visibilitychange
+    // Navigate to Spotify URL - deep link will open Spotify app
+    // visibilitychange event will detect when user returns
+    window.location.href = getSpotifyRedirectUrl();
   };
 
   const handleReturnedFromApp = async () => {
