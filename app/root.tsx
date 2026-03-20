@@ -17,6 +17,9 @@ import styles from "./root.module.css";
 
 export const links: Route.LinksFunction = () => [
   { rel: "manifest", href: "/manifest.json" },
+  { rel: "icon", href: "/logo-icon-app.svg", type: "image/svg+xml" },
+  { rel: "icon", href: "/logo-icon-app.png", type: "image/png" },
+  { rel: "apple-touch-icon", href: "/logo-icon-app.png" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -32,7 +35,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="ChimeLine" />
-        <link rel="apple-touch-icon" href="/favicon.ico" />
         
         <Meta />
         <Links />
