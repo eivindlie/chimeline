@@ -123,3 +123,29 @@ export async function downloadQRCode(
     );
   }
 }
+
+/**
+ * Download QR code from a data URL (PNG)
+ * Used when QR code is already generated as a data URL
+ */
+export async function downloadQRFromDataUrl(
+  qrDataUrl: string,
+  filename: string
+): Promise<void> {
+  try {
+    const response = await fetch(qrDataUrl);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    throw new Error(
+      `Failed to download QR code: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}

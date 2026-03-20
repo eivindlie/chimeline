@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import type { Route } from "./+types/generator";
 import { getToken } from "../lib/spotifyAuth";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
-import { parseSpotifyTrackId, fetchTrackById } from "../lib/spotifySearch";
-import { generateQRCode } from "../lib/qrGenerator";
+import { generateQRFromTrackUrl } from "../lib/generateQRFromTrackUrl";
+import { downloadQRFromDataUrl } from "../lib/qrGenerator";
 import { toMinimalCardData, type CardData } from "../lib/schemas";
 import styles from "./generator.module.css";
 
@@ -38,26 +38,21 @@ export default function GeneratorPage() {
     setIsLoading(true);
 
     try {
-      // Get token from session
-      const token = getToken();
       if (!token) {
         throw new Error("Not authenticated with Spotify");
       }
 
-      // Parse track ID from URL/URI
-      const trackId = parseSpotifyTrackId(trackUrl);
-      if (!trackId) {
-        throw new Error(
-          "Invalid Spotify track URL. Please use:\n- spotify:track:XXXX\n- https://open.spotify.com/track/XXXX\n- Track ID (22 chars)"
-        );
+      if (!trackUrl.trim()) {
+        throw new Error("Please enter a Spotify track URL");
       }
 
-      // Fetch track data
-      const track = await fetchTrackById(trackId, token);
-      setCardData(track);
+      // Generate QR from track URL
+      const { cardData: newCardData, qrUrl } = await generateQRFromTrackUrl(
+        trackUrl,
+        token
+      );
 
-      // Generate QR code
-      const qrUrl = await generateQRCode(track);
+      setCardData(newCardData);
       setQrDataUrl(qrUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -72,21 +67,15 @@ export default function GeneratorPage() {
   const handleDownload = async () => {
     if (!qrDataUrl || !cardData) return;
 
+    setError(null);
+
     try {
-      const response = await fetch(qrDataUrl);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${cardData.title}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const filename = `${cardData.title}.png`;
+      await downloadQRFromDataUrl(qrDataUrl, filename);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to download QR code"
-      );
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("Download error:", message);
+      setError(message);
     }
   };
 
