@@ -2,6 +2,7 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import type { CardData } from './schemas';
 import { generateQRCodeBlob } from './qrGenerator';
+import type { TDocumentDefinitions, Content, Table } from 'pdfmake/interfaces';
 
 // Initialize pdfMake with fonts - use dynamic assignment to avoid type issues
 if (typeof window !== 'undefined') {
@@ -49,134 +50,207 @@ export async function generateCardsPDFFromTracks(
 
     console.log(`[pdfCardGenerator] Generated QR codes for ${trackQRs.size} tracks`);
 
-    // Build QR code table rows: 3 columns per row
-    const qrTableBody: any[] = [];
-    for (let i = 0; i < tracks.length; i += 3) {
-      const rowTracks = tracks.slice(i, i + 3);
-      const cells: any[] = rowTracks.map((track) => {
-        const qrUrl = trackQRs.get(`${track.spotifyUri}-${track.title}`);
-        return {
-          image: qrUrl || '',
-          fit: [165, 165], // Reduced from 179 to ensure equal margins on both sides
-          alignment: 'center' as const,
-          valign: 'middle' as const,
-          border: [1, 1, 1, 1] as [number, number, number, number],
-          borderColor: '#e0e0e0',
-          margin: [3, 3, 3, 3] as [number, number, number, number],
-        };
-      });
+    // Group tracks into pages (12 cards per page = 4 rows of 3)
+    const CARDS_PER_PAGE = 12;
+    const pageCount = Math.ceil(tracks.length / CARDS_PER_PAGE);
+    const pages: Record<string, unknown>[] = [];
 
-      // Pad with empty cells if row has fewer than 3 items (last row)
-      while (cells.length < 3) {
-        cells.push({
-          text: '',
-          border: [1, 1, 1, 1] as [number, number, number, number],
-          borderColor: '#e0e0e0',
+    // Build alternating QR and title pages
+    for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+      const pageStart = pageIndex * CARDS_PER_PAGE;
+      const pageEnd = Math.min(pageStart + CARDS_PER_PAGE, tracks.length);
+      const pageTracks = tracks.slice(pageStart, pageEnd);
+
+      // Build QR table for this page
+      const qrTableBody: any[] = [];
+      for (let i = 0; i < pageTracks.length; i += 3) {
+        const rowTracks = pageTracks.slice(i, i + 3);
+        const cells: Record<string, unknown>[] = rowTracks.map((track) => {
+          const qrUrl = trackQRs.get(`${track.spotifyUri}-${track.title}`);
+          return {
+            image: qrUrl || '',
+            fit: [140, 140],
+            alignment: 'center',
+            verticalAlignment: 'middle',
+            border: [1, 1, 1, 1],
+            borderColor: '#e0e0e0',
+            margin: [0, 0, 0, 0],
+          };
         });
+
+        // Pad with empty cells if row has fewer than 3 items
+        while (cells.length < 3) {
+          cells.push({
+            text: '',
+            border: [1, 1, 1, 1] as [number, number, number, number],
+            borderColor: '#e0e0e0',
+          });
+        }
+
+        qrTableBody.push(cells);
       }
 
-      qrTableBody.push(cells);
-    }
-
-    // Build song title table rows: 3 columns per row
-    // IMPORTANT: Reverse order for correct double-sided printing (flip on long edge)
-    const titleTableBody: any[] = [];
-    for (let i = 0; i < tracks.length; i += 3) {
-      const rowTracks = tracks.slice(i, i + 3);
-      const cells: any[] = rowTracks.map((track) => {
-        return {
-          text: `${track.title}\n${track.artist}`,
-          alignment: 'center' as const,
-          valign: 'middle' as const,
-          fontSize: 9,
-          border: [1, 1, 1, 1] as [number, number, number, number],
-          borderColor: '#e0e0e0',
-          margin: [3, 3, 3, 3] as [number, number, number, number],
-        };
-      });
-
-      // Pad with empty cells if row has fewer than 3 items (last row)
-      while (cells.length < 3) {
-        cells.push({
-          text: '',
-          border: [1, 1, 1, 1] as [number, number, number, number],
-          borderColor: '#e0e0e0',
+      // Build title table for this page (reversed for flip)
+      const titleTableBody: any[] = [];
+      for (let i = 0; i < pageTracks.length; i += 3) {
+        const rowTracks = pageTracks.slice(i, i + 3);
+        const cells: Record<string, unknown>[] = rowTracks.map((track) => {
+          const year = new Date(track.releaseDate).getFullYear();
+          const formattedDate = new Date(track.releaseDate).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          });
+          return {
+            table: {
+              widths: ['100%'],
+              heights: [45, 90, 50],
+              body: [
+                [
+                  {
+                    text: track.title,
+                    fontSize: 9,
+                    bold: true,
+                    alignment: 'center',
+                    verticalAlignment: 'top',
+                    border: [0, 0, 0, 0],
+                    margin: [5, 5, 5, 0],
+                  },
+                ],
+                [
+                  {
+                    stack: [
+                      {
+                        text: formattedDate,
+                        fontSize: 7,
+                        alignment: 'center',
+                        margin: [0, 5, 0, 10],
+                      },
+                      {
+                        text: year.toString(),
+                        fontSize: 20,
+                        bold: true,
+                        alignment: 'center',
+                        margin: [0, 0, 0, 0],
+                      },
+                    ],
+                    verticalAlignment: 'middle',
+                    border: [0, 0, 0, 0],
+                    margin: [0, 0, 0, 0],
+                  },
+                ],
+                [
+                  {
+                    text: track.artist,
+                    fontSize: 7,
+                    alignment: 'center',
+                    verticalAlignment: 'bottom',
+                    border: [0, 0, 0, 0],
+                    margin: [5, 0, 5, 5],
+                  },
+                ],
+              ],
+            },
+            border: [1, 1, 1, 1],
+            borderColor: '#e0e0e0',
+            margin: [0, 0, 0, 0],
+          };
         });
+
+        // Pad with empty cells
+        while (cells.length < 3) {
+          cells.push({
+            text: '',
+            border: [1, 1, 1, 1] as [number, number, number, number],
+            borderColor: '#e0e0e0',
+          });
+        }
+
+        titleTableBody.push(cells);
       }
 
-      titleTableBody.push(cells);
-    }
+      // Reverse columns for long-edge flip alignment
+      const reversedTitleBody = titleTableBody.map((row) => [...row].reverse());
 
-    // Reverse columns only for long-edge flip alignment
-    // (flip on the vertical axis - like turning a page in a book)
-    const reversedTitleBody = titleTableBody.map((row) => [...row].reverse());
+      // Add QR page
+      pages.push({
+        text: pageIndex === 0 ? 'PAGE 1: QR CODES (Print First)' : `QR CODES - Page ${pageIndex * 2 + 1}`,
+        fontSize: 10,
+        color: '#666',
+        alignment: 'center',
+        margin: [0, 0, 0, 3],
+      });
+      pages.push({
+        text: pageIndex === 0
+          ? 'Use automatic duplex printing (double-sided) with long-edge flip. Printer will automatically flip and print song titles on the back. Then cut all cards.'
+          : 'Continue with automatic duplex printing. Printer will handle the flip.',
+        fontSize: 8,
+        color: '#999',
+        alignment: 'center',
+        margin: [0, 0, 0, 10],
+      });
+      pages.push({
+        table: {
+          widths: ['*', '*', '*'],
+          heights: new Array(qrTableBody.length).fill(185),
+          body: qrTableBody,
+          headerRows: 0,
+        },
+        layout: {
+          hLineWidth: () => 0.5,
+          vLineWidth: () => 0.5,
+          hLineColor: () => '#d0d0d0',
+          vLineColor: () => '#d0d0d0',
+        },
+      });
+      pages.push({
+        text: '',
+        pageBreak: 'after',
+      });
 
-    // Create the document definition with both pages
-    const docDef: any = {
-      pageSize: 'A4',
-      pageMargins: [12, 10, 12, 10], // left, top, right, bottom - balanced margins
-      content: [
-        {
-          text: 'PAGE 1: QR CODES (Print First)',
-          fontSize: 10,
-          color: '#666',
-          alignment: 'center',
-          margin: [0, 0, 0, 3],
+      // Add title page
+      pages.push({
+        text: `SONG TITLES - Page ${pageIndex * 2 + 2}`,
+        fontSize: 10,
+        color: '#666',
+        alignment: 'center',
+        margin: [0, 0, 0, 3],
+      });
+      pages.push({
+        text: pageIndex === pageCount - 1
+          ? 'Duplex printing complete! Cut the same way as the QR codes. Glue back-to-back to create finished cards.'
+          : 'Duplex printing will continue automatically.',
+        fontSize: 8,
+        color: '#999',
+        alignment: 'center',
+        margin: [0, 0, 0, 10],
+      });
+      pages.push({
+        table: {
+          widths: ['*', '*', '*'],
+          heights: new Array(reversedTitleBody.length).fill(185),
+          body: reversedTitleBody,
+          headerRows: 0,
         },
-        {
-          text: 'Print this page. After printing, flip the paper on the long edge and load back into printer to print page 2. Then cut all cards.',
-          fontSize: 8,
-          color: '#999',
-          alignment: 'center',
-          margin: [0, 0, 0, 10],
+        layout: {
+          hLineWidth: () => 0.5,
+          vLineWidth: () => 0.5,
+          hLineColor: () => '#d0d0d0',
+          vLineColor: () => '#d0d0d0',
         },
-        {
-          table: {
-            widths: ['*', '*', '*'], // 3 equal columns
-            heights: new Array(qrTableBody.length).fill(185), // 65mm ≈ 185 points
-            body: qrTableBody,
-            headerRows: 0,
-          },
-          layout: {
-            hLineWidth: () => 0.5,
-            vLineWidth: () => 0.5,
-            hLineColor: () => '#d0d0d0',
-            vLineColor: () => '#d0d0d0',
-          },
-        },
-        {
+      });
+      if (pageIndex < pageCount - 1) {
+        pages.push({
           text: '',
           pageBreak: 'after',
-        },
-        {
-          text: 'PAGE 2: SONG TITLES (Print & Cut - Flip Side)',
-          fontSize: 10,
-          color: '#666',
-          alignment: 'center',
-          margin: [0, 0, 0, 3],
-        },
-        {
-          text: 'Flip page 1 on the long edge (like turning a page in a book), then print this side. Cut the same way. Glue back-to-back with page 1 cards.',
-          fontSize: 8,
-          color: '#999',
-          alignment: 'center',
-          margin: [0, 0, 0, 10],
-        },
-        {
-          table: {
-            widths: ['*', '*', '*'], // 3 equal columns
-            heights: new Array(reversedTitleBody.length).fill(185), // 65mm ≈ 185 points, same as QR side
-            body: reversedTitleBody,
-            headerRows: 0,
-          },
-          layout: {
-            hLineWidth: () => 0.5,
-            vLineWidth: () => 0.5,
-            hLineColor: () => '#d0d0d0',
-            vLineColor: () => '#d0d0d0',
-          },
-        },
-      ],
+        });
+      }
+    }
+
+    // Create the document definition with dynamically generated pages
+    const docDef: TDocumentDefinitions = {
+      pageSize: 'A4',
+      pageMargins: [12, 10, 12, 10], // left, top, right, bottom - balanced margins
+      content: pages as any,
     };
 
     // Generate and download the PDF
