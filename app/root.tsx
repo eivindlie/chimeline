@@ -7,7 +7,7 @@ import {
   ScrollRestoration,
   Link,
 } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 import type { Route } from "./+types/root";
@@ -36,8 +36,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    // Check if user is logged in (has spotify_token in sessionStorage)
+    const token = sessionStorage.getItem("spotify_token");
+    setIsLoggedIn(!!token);
+
     // Handle GitHub Pages 404.html redirect fallback for SPA routing
     const storedRedirect = sessionStorage.getItem("redirect");
     if (storedRedirect && storedRedirect !== location.href) {
@@ -48,17 +53,32 @@ export default function App() {
   }, [navigate]);
 
   const handleLogout = () => {
-    // Clear all Spotify and app storage
-    localStorage.removeItem("spotify_token");
-    localStorage.removeItem("spotify_user");
-    localStorage.removeItem("spotify_pkce_verifier");
-    localStorage.removeItem("spotify_oauth_state");
-    localStorage.removeItem("chimeline_selected_device");
-    localStorage.removeItem("auth_redirect_to");
-    sessionStorage.removeItem("redirect");
-    
-    // Redirect to home
-    navigate("/");
+    try {
+      // Clear all Spotify and app storage from both sessionStorage and localStorage
+      // sessionStorage keys
+      sessionStorage.removeItem("spotify_token");
+      sessionStorage.removeItem("spotify_pkce_verifier");
+      sessionStorage.removeItem("spotify_oauth_state");
+      sessionStorage.removeItem("spotify_user");
+      sessionStorage.removeItem("redirect");
+      
+      // localStorage keys
+      localStorage.removeItem("spotify_token");
+      localStorage.removeItem("spotify_user");
+      localStorage.removeItem("spotify_pkce_verifier");
+      localStorage.removeItem("spotify_oauth_state");
+      localStorage.removeItem("chimeline_selected_device");
+      localStorage.removeItem("auth_redirect_to");
+      
+      console.log("Logout successful, all storage cleared");
+      setIsLoggedIn(false);
+      
+      // Hard redirect to home (more reliable than React Router navigation on mobile)
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout error:", error);
+      alert("Logout failed. Try clearing storage manually.");
+    }
   };
 
   return (
@@ -67,9 +87,11 @@ export default function App() {
         <Link to="/" className={styles.headerTitle}>
           <h1>ChimeLine</h1>
         </Link>
-        <button onClick={handleLogout} className={styles.logoutButton}>
-          Logout
-        </button>
+        {isLoggedIn && (
+          <button onClick={handleLogout} className={styles.logoutButton}>
+            Logout
+          </button>
+        )}
       </header>
       <main className={styles.main}>
         <Outlet />
