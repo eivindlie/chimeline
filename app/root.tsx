@@ -6,6 +6,8 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -32,6 +34,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Handle GitHub Pages 404.html redirect fallback for SPA routing
+    const storedRedirect = sessionStorage.getItem("redirect");
+    if (storedRedirect && storedRedirect !== location.href) {
+      sessionStorage.removeItem("redirect");
+      const url = new URL(storedRedirect);
+      navigate(url.pathname + url.search + url.hash);
+    }
+  }, [navigate]);
+
   return (
     <div className={styles.root}>
       <header className={styles.header}>
