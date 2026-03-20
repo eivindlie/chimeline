@@ -36,15 +36,17 @@ export default function ScannerPage() {
   }, [isAuthed]);
 
   // Manage Spotify playback SDK
-  const { playerReady, isPlaying: sdkIsPlaying, player } = useSpotifyPlayer(
-    token,
-    (message) => setError(message)
+  const { playerReady, isPlaying: sdkIsPlaying, player, deviceId, error: playerError } = useSpotifyPlayer(
+    token
   );
 
-  // Update playing state from SDK
+  // Update playing state from SDK and display SDK errors
   useEffect(() => {
     setIsPlaying(sdkIsPlaying);
-  }, [sdkIsPlaying]);
+    if (playerError) {
+      setError(playerError);
+    }
+  }, [sdkIsPlaying, playerError]);
 
   const handleStartScanning = () => {
     setError(null);
@@ -68,7 +70,7 @@ export default function ScannerPage() {
             "Check browser console for initialization errors. " +
             "Try refreshing the page."
         );
-        console.error("🔴 BLOCKED: Player not initialized", {
+        console.error("🔴 Player not initialized", {
           playerReady,
           playerExists: !!player,
         });
@@ -78,7 +80,7 @@ export default function ScannerPage() {
       setError(null);
 
       try {
-        await playTrack(player, cardData.spotifyUri);
+        await playTrack(player, cardData.spotifyUri, deviceId);
         setIsPlaying(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
@@ -86,7 +88,7 @@ export default function ScannerPage() {
         setError(`Playback failed: ${message}`);
       }
     },
-    [token, playerReady, player]
+    [token, playerReady, player, deviceId]
   );
 
   const handlePause = useCallback(async () => {
