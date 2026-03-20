@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { useAuthRedirect } from "~/lib/useAuthRedirect";
 import { fetchAvailableDevices, getSelectedDeviceId, saveSelectedDeviceId, SILENCE_TRACK_ID } from "~/lib/spotifyDevices";
 import styles from "./setup.module.css";
 
@@ -7,6 +8,9 @@ export default function Setup() {
   const navigate = useNavigate();
   const [step, setStep] = useState<"welcome" | "processing" | "success" | "error">("welcome");
   const [errorMessage, setErrorMessage] = useState("");
+  
+  // Check auth and redirect to login if needed
+  const isAuthed = useAuthRedirect("/setup");
 
   const getSpotifyRedirectUrl = () => {
     const baseUrl = `https://open.spotify.com/track/${SILENCE_TRACK_ID}`;
@@ -19,6 +23,12 @@ export default function Setup() {
   };
 
   const handleReturnedFromApp = async () => {
+    if (!isAuthed) {
+      setErrorMessage("Authentication lost. Please try again.");
+      setStep("error");
+      return;
+    }
+
     try {
       const token = sessionStorage.getItem("spotify_token");
       if (!token) {
@@ -74,11 +84,23 @@ export default function Setup() {
       }
     };
 
-    if (step === "processing") {
+    if (step === "processing" && isAuthed) {
       document.addEventListener("visibilitychange", handleVisibilityChange);
       return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
     }
-  }, [step, navigate]);
+  }, [step, isAuthed, navigate]);
+
+  // Show loading state while auth is being checked
+  if (!isAuthed) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <div className={styles.spinner}></div>
+          <p>Connecting to Spotify...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
