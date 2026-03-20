@@ -57,7 +57,7 @@ export async function generateCardsPDFFromTracks(
         const qrUrl = trackQRs.get(`${track.spotifyUri}-${track.title}`);
         return {
           image: qrUrl || '',
-          fit: [179, 179], // Slightly smaller to fit in 185pt row with padding
+          fit: [165, 165], // Reduced from 179 to ensure equal margins on both sides
           alignment: 'center' as const,
           valign: 'middle' as const,
           border: [1, 1, 1, 1] as [number, number, number, number],
