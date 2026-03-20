@@ -3,6 +3,7 @@ import pdfFonts from 'pdfmake/build/vfs_fonts';
 import type { CardData } from './schemas';
 import { generateQRCodeBlob } from './qrGenerator';
 import type { TDocumentDefinitions, Content, Table } from 'pdfmake/interfaces';
+import watermarkPng from '../assets/logo-icon-watermark.png';
 
 // Initialize pdfMake with fonts - use dynamic assignment to avoid type issues
 if (typeof window !== 'undefined') {
@@ -15,6 +16,35 @@ if (typeof window !== 'undefined') {
     console.warn('Could not initialize pdfMake VFS:', e);
   }
 }
+
+// Convert image path/URL to data URL for pdfmake compatibility
+async function imageToDataUrl(imagePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Could not get canvas 2D context'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    
+    img.onerror = () => {
+      reject(new Error(`Failed to load image: ${imagePath}`));
+    };
+    
+    img.src = imagePath;
+  });
+}
+
+let watermarkDataUrl: string | null = null;
 
 export interface PDFGenerationOptions {
   filename?: string;
@@ -49,6 +79,11 @@ export async function generateCardsPDFFromTracks(
     }
 
     console.log(`[pdfCardGenerator] Generated QR codes for ${trackQRs.size} tracks`);
+
+    // Convert watermark to data URL
+    if (!watermarkDataUrl) {
+      watermarkDataUrl = await imageToDataUrl(watermarkPng);
+    }
 
     // Group tracks into pages (12 cards per page = 4 rows of 3)
     const CARDS_PER_PAGE = 12;
@@ -103,30 +138,43 @@ export async function generateCardsPDFFromTracks(
           return {
             stack: [
               {
-                text: track.title,
-                fontSize: 11,
-                bold: true,
+                image: watermarkDataUrl || '',
+                width: 170,
+                height: 170,
                 alignment: 'center',
-                margin: [0, 0, 0, 45],
+                opacity: 1,
+                margin: [0, -10, 0, -160],
               },
               {
-                text: formattedDate,
-                fontSize: 8,
-                alignment: 'center',
-                margin: [0, 0, 0, 2],
-              },
-              {
-                text: year.toString(),
-                fontSize: 32,
-                bold: true,
-                alignment: 'center',
-                margin: [0, 0, 0, 0],
-              },
-              {
-                text: track.artist,
-                fontSize: 8,
-                alignment: 'center',
-                margin: [0, 45, 0, 0],
+                stack: [
+                  {
+                    text: track.title,
+                    fontSize: 11,
+                    bold: true,
+                    alignment: 'center',
+                    margin: [0, 0, 0, 45],
+                  },
+                  {
+                    text: formattedDate,
+                    fontSize: 8,
+                    alignment: 'center',
+                    margin: [0, 0, 0, 2],
+                  },
+                  {
+                    text: year.toString(),
+                    fontSize: 32,
+                    bold: true,
+                    alignment: 'center',
+                    margin: [0, 0, 0, 0],
+                  },
+                  {
+                    text: track.artist,
+                    fontSize: 8,
+                    alignment: 'center',
+                    margin: [0, 45, 0, 0],
+                  },
+                ],
+                verticalAlignment: 'middle',
               },
             ],
             verticalAlignment: 'middle',
