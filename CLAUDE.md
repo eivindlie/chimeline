@@ -776,34 +776,49 @@ gh-pages -d dist  # or manual upload of dist/ contents
 
 ## Project Status & Notes
 
-**Current Phase**: QR Scanner & Generator Complete ✅ (`Phase 4-6` finished)
+**Current Phase**: Utilities & Refactoring Complete ✅ (`Phase 4-8` finished)
 - [x] Phase 1: Project Scaffolding (React Router Framework Mode + SPA config)
 - [x] Phase 2: File-based routing working with `@react-router/fs-routes` + `flatRoutes()`
 - [x] Phase 3: Spotify PKCE OAuth with state parameter (CSRF protection)
-- [x] Phase 4: QR Services ✅ COMPLETED THIS SESSION
+- [x] Phase 4: QR Services ✅
   - ✅ `app/lib/qrGenerator.ts` — QR code generation with minimal 4-field payload (u, t, a, d)
   - ✅ `app/lib/qrScanner.ts` — QR decoding via html5-qrcode + camera integration
   - ✅ Payload optimization: ~50% size reduction vs full JSON
   - ✅ Fixed JSON parsing for both string and object QR payloads
-- [x] Phase 5: Scanner Route ✅ COMPLETED THIS SESSION
+  - ✅ Added `downloadQRFromDataUrl()` helper
+- [x] Phase 5: Scanner Route ✅
   - ✅ `app/routes/scanner.tsx` — Live camera QR scanning with playback controls
   - ✅ `app/routes/scanner.module.css` — Mobile-friendly responsive UI
   - ✅ Spotify REST API playback (requires active Spotify device)
   - ✅ Auto-play on QR scan, manual play/pause/stop controls
   - ✅ Track metadata display (for debugging, removes later)
   - ✅ Working on mobile via ngrok
-- [x] Phase 6: Generator Route ✅ COMPLETED THIS SESSION
+- [x] Phase 6: Generator Route ✅
   - ✅ `app/routes/generator.tsx` — Single-track QR generator
   - ✅ `app/routes/generator.module.css` — Form UI with QR display & download
   - ✅ Spotify track fetching & URL/URI/ID parsing
   - ✅ Download QR as PNG functionality
   - ✅ JSON payload preview for debugging
-- [ ] Phase 7: Spotify Search & Playlist (batch generation) — next priority
-- [ ] Phase 8: Root Layout & Navigation with route guards
-- [ ] Phase 9: GitHub Pages 404.html Fallback
-- [ ] Phase 10: Integration Testing & Deployment
+- [x] Phase 7: Reusable Utilities & Refactoring ✅ **NEW THIS SESSION**
+  - ✅ `app/lib/useAuthRedirect.ts` — Custom hook for auth + redirect to correct route post-login
+  - ✅ `app/lib/useSpotifyPlayer.ts` — Custom hook for SDK initialization and playback state
+  - ✅ `app/lib/spotifyPlayback.ts` — Imperative functions: `playTrack()`, `pausePlayback()`, `playViaSDK()`, `pauseViaSDK()`
+  - ✅ `app/lib/generateQRFromTrackUrl.ts` — Unified track URL parsing + metadata fetch + QR generation
+  - ✅ Refactored `scanner.tsx` (350 → 220 lines) using new hooks and utilities
+  - ✅ Refactored `generator.tsx` (180 → 100 lines) using new utilities
+  - ✅ Fixed CardData conversion bug in `generateQRFromTrackUrl.ts`
+- [x] Phase 8: GitHub Pages Deployment ✅ **NEW THIS SESSION**
+  - ✅ GitHub Actions CI/CD pipeline (`deploy.yml`) for automatic build & deploy
+  - ✅ `public/404.html` SPA routing fallback for GitHub Pages
+  - ✅ Landing page (`_index.tsx`) with navigation links
+  - ✅ Auth redirect persistence via localStorage (`auth_redirect_to`)
+  - ✅ Deployed to `chimeline.prograd.no` with custom domain
+  - ✅ All routes working without 404 errors on production
+- [ ] Phase 9: Spotify Search & Playlist (batch generation) — next priority
+- [ ] Phase 10: Auth Route Guards (require login for protected routes)
+- [ ] Phase 11: Integration Testing & Additional Features
 
-**Key Decisions Made This Session**:
+**Key Decisions Made**:
 - ✅ Switched from npm to pnpm for better peer dependency resolution
 - ✅ qrcode library (pure JS) instead of qrcode.react wrapper — more control
 - ✅ html5-qrcode for camera scanning — clean API, good mobile support
@@ -811,8 +826,11 @@ gh-pages -d dist  # or manual upload of dist/ contents
 - ✅ Zod validation for all Spotify API responses — runtime type safety
 - ✅ REST API fallback for playback — Web Playback SDK (known issue below)
 - ✅ CSS Modules only — no Tailwind, scoped styling
+- ✅ localStorage for OAuth redirect persistence (more reliable than sessionStorage)
+- ✅ GitHub Pages with GitHub Actions CI/CD for continuous deployment
+- ✅ Extract business logic to reusable hooks & functions (maintainability)
 
-**Completed Features** (This Session):
+**Completed Features** (This Multi-Session):
 - ✅ QR code generation with minimal 4-field payload (u=uri, t=title, a=artist, d=releaseDate)
 - ✅ QR code scanning via camera (html5-qrcode)
 - ✅ Single-track QR generator with download
@@ -824,17 +842,25 @@ gh-pages -d dist  # or manual upload of dist/ contents
 - ✅ JSON payload inspection in UI
 - ✅ Removed redundant types.ts (all types in schemas.ts with Zod)
 - ✅ Fixed route discovery to ignore CSS modules
-- ✅ Improved SQL parsing for JSON string payloads
+- ✅ Improved JSON parsing for both string and object QR payloads
+- ✅ Landing page with styled navigation links
+- ✅ useAuthRedirect hook (reusable auth + redirect pattern)
+- ✅ useSpotifyPlayer hook (reusable Spotify SDK initialization)
+- ✅ spotifyPlayback.ts utilities (play/pause with REST fallback)
+- ✅ generateQRFromTrackUrl.ts (unified track → QR pipeline)
+- ✅ GitHub Pages deployment with custom domain (chimeline.prograd.no)
+- ✅ GitHub Actions CI/CD pipeline (auto-build & deploy on push)
+- ✅ SPA routing fallback (404.html for GitHub Pages)
 
 **Known Issues**:
 - ❌ **Spotify Web Playback SDK not connecting** — `ready` event never fires
   - Workaround: Use REST API playback (requires Spotify app running on a device)
   - Investigate: CORS issue? Token scope? Browser policy?
   - Impact: Users must have Spotify app open; can't play in browser without it
-- Route auth guards not yet implemented (anyone can access /scanner, /generator)
-- Metadata displays in scanner (game-spoiling; remove in final version)
-- Batch QR generation not yet implemented
-- Spotify search not yet implemented
+- ⬜ Route auth guards not yet implemented (anyone can access /scanner, /generator)
+- ⬜ Metadata displays in scanner (game-spoiling; remove in final version)
+- ⬜ Batch QR generation not yet implemented
+- ⬜ Spotify search/playlist import not yet implemented
 
 **Development Tips**:
 - `pnpm dev` to start dev server (auto-reload on file changes)
@@ -843,20 +869,33 @@ gh-pages -d dist  # or manual upload of dist/ contents
 - Console has debug logging for QR parsing and player initialization
 - pnpm cleaner than npm for React Router projects; peer deps resolved automatically
 
+**Refactoring Patterns** (Recent Session):
+- **Custom Hooks**: `useAuthRedirect()` and `useSpotifyPlayer()` encapsulate side effects
+  - Use hooks for mount/unmount logic, state management, event listeners
+  - Example: useSpotifyPlayer initializes SDK once, manages ready/state_changed events
+- **Imperative Utility Functions**: `spotifyPlayback.ts`, `generateQRFromTrackUrl()` for actions
+  - Use functions for button clicks, API calls, data transformations
+  - Example: `playTrack(uri, token)` called directly from handlePlay event
+- **Type Safety**: Verify return types when extracting functions
+  - Bug caught: `fetchTrackById()` returns `FullCardData`, not `SpotifyTrack`
+  - Always check what function returns before using in calling code
+
 **Next Steps** (Prioritized):
 1. **Fix Web Playback SDK** (investigate why ready event doesn't fire)
 2. **Batch QR generation** from playlists (upload file or paste playlist URL)
 3. **Spotify search integration** (find tracks by title/artist)
 4. **Remove metadata display** from scanner (game production release)
 5. **Route auth guards** (require login for /scanner, /generator)
-6. **GitHub Pages deployment** with 404.html fallback
-7. **PDF export** for printable QR booklets (future enhancement)
+6. **PDF export** for printable QR booklets (future enhancement)
 
 ---
 
-**Last Updated**: March 18, 2026 (Session completed - QR generator & scanner working)  
+**Last Updated**: March 20, 2026 (Session completed - Utilities refactored, GitHub Pages deployed)  
 **Status**: 
 - ✅ QR generation & scanning fully functional
 - ✅ Spotify playback working via REST API (requires app running)
+- ✅ Refactored to reusable hooks and utilities (maintainable code)
+- ✅ GitHub Pages deployment with GitHub Actions CI/CD (auto-deploy on push)
+- ✅ Custom domain (chimeline.prograd.no) with SPA routing
 - ⚠️ Web Playback SDK needs debugging
 - 🚀 Ready for batch generation & search integration
