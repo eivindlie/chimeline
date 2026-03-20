@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Route } from "./+types/generator";
-import { getToken } from "../lib/spotifyAuth";
+import { getToken, getAuthUrl } from "../lib/spotifyAuth";
 import { parseSpotifyTrackId, fetchTrackById } from "../lib/spotifySearch";
 import { generateQRCode } from "../lib/qrGenerator";
 import { toMinimalCardData, type CardData } from "../lib/schemas";
@@ -19,6 +19,36 @@ export default function GeneratorPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthed, setIsAuthed] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Check auth on mount
+  useEffect(() => {
+    const token = getToken();
+    
+    if (!token) {
+      // Redirect to login
+      const handleLogin = async () => {
+        const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+        const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
+
+        if (clientId && redirectUri) {
+          try {
+            // Pass the current path to encode in the state parameter
+            const authUrl = await getAuthUrl(clientId, redirectUri, "/generator");
+            window.location.href = authUrl;
+          } catch (err) {
+            console.error("Failed to get auth URL:", err);
+          }
+        }
+      };
+      handleLogin();
+      return;
+    }
+
+    setIsAuthed(true);
+    setIsChecking(false);
+  }, []);
 
   const handleGenerateQR = async () => {
     setError(null);

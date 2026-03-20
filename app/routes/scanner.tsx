@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Route } from "./+types/scanner";
-import { getToken } from "../lib/spotifyAuth";
+import { getToken, getAuthUrl } from "../lib/spotifyAuth";
 import { startScanning, stopScanning } from "../lib/qrScanner";
 import type { Html5Qrcode } from "html5-qrcode";
 import type { FullCardData } from "../lib/schemas";
@@ -23,10 +23,31 @@ export default function ScannerPage() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
 
-  // Initialize token on mount (client-side only)
+  // Check auth and initialize token on mount (client-side only)
   useEffect(() => {
     const t = getToken();
     setToken(t);
+    
+    // If no token, redirect to login
+    if (!t) {
+      const handleLogin = async () => {
+        const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+        const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
+
+        if (clientId && redirectUri) {
+          try {
+            // Pass the current path to encode in the state parameter
+            const authUrl = await getAuthUrl(clientId, redirectUri, "/scanner");
+            window.location.href = authUrl;
+          } catch (err) {
+            console.error("Failed to get auth URL:", err);
+          }
+        }
+      };
+      handleLogin();
+      return;
+    }
+
     setIsInitialized(true);
   }, []);
 

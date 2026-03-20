@@ -82,7 +82,8 @@ export async function generateCodeChallenge(
  */
 export async function getAuthUrl(
   clientId: string,
-  redirectUri: string
+  redirectUri: string,
+  redirectPath?: string
 ): Promise<string> {
   const { codeVerifier } = generatePKCE();
   const codeChallenge = await generateCodeChallenge(codeVerifier);
@@ -92,6 +93,11 @@ export async function getAuthUrl(
   if (typeof window !== "undefined") {
     sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
     sessionStorage.setItem(STATE_KEY, state);
+    
+    // Store redirect path in localStorage (persists through auth redirect)
+    if (redirectPath) {
+      localStorage.setItem("auth_redirect_to", redirectPath);
+    }
   }
 
   const params = new URLSearchParams({
@@ -105,6 +111,16 @@ export async function getAuthUrl(
   });
 
   return `${SPOTIFY_ENDPOINTS.AUTHORIZE}?${params.toString()}`;
+}
+
+/**
+ * Get stored redirect path from localStorage and clear it
+ */
+export function getAndClearRedirectPath(): string | null {
+  if (typeof window === "undefined") return null;
+  const path = localStorage.getItem("auth_redirect_to");
+  localStorage.removeItem("auth_redirect_to");
+  return path;
 }
 
 /**

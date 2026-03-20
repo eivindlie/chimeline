@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { Link } from "react-router";
 import type { Route } from "./+types/_index";
-import { getToken, getAuthUrl, getUser, clearToken } from "../lib/spotifyAuth";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -10,65 +9,34 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    // Check if user has a token
-    const token = getToken();
-    setIsLoggedIn(!!token);
-
-    // Get user profile if logged in
-    if (token) {
-      const user = getUser();
-      if (user) {
-        setUsername(user.display_name);
-      }
-    }
-  }, []);
-
-  const handleLogin = async () => {
-    setIsLoading(true);
-    try {
-      const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-      const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
-
-      if (!clientId || !redirectUri) {
-        throw new Error("Missing Spotify configuration");
-      }
-
-      const authUrl = await getAuthUrl(clientId, redirectUri);
-      window.location.href = authUrl;
-    } catch (error) {
-      console.error("Failed to initiate login:", error);
-      setIsLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    clearToken();
-    setIsLoggedIn(false);
-    setUsername(null);
-  };
-
   return (
-    <div>
-      <h1>Welcome to ChimeLine</h1>
-      <p>A timeline-based card game with QR code song playback.</p>
+    <div style={{ textAlign: "center", padding: "2rem" }}>
+      <h1>ChimeLine</h1>
+      <p>Play songs during a timeline-based card game using QR codes.</p>
 
-      {isLoggedIn ? (
-        <div>
-          <p>✓ You are logged in with Spotify {username && `as ${username}`}</p>
-          <button onClick={handleLogout}>Logout</button>
-        </div>
-      ) : (
-        <button onClick={handleLogin} disabled={isLoading}>
-          {isLoading ? "Logging in..." : "Login with Spotify"}
-        </button>
-      )}
-
-      <p>Scanner and Generator coming soon...</p>
+      <div style={{ marginTop: "2rem", display: "flex", gap: "1rem", justifyContent: "center" }}>
+        <Link to="/scanner" style={{
+          padding: "1rem 2rem",
+          fontSize: "1.1rem",
+          backgroundColor: "#1DB954",
+          color: "white",
+          textDecoration: "none",
+          borderRadius: "8px",
+        }}>
+          📱 Scan QR Codes
+        </Link>
+        <Link to="/generator" style={{
+          padding: "1rem 2rem",
+          fontSize: "1.1rem",
+          backgroundColor: "#191414",
+          color: "white",
+          textDecoration: "none",
+          borderRadius: "8px",
+          border: "2px solid #1DB954",
+        }}>
+          ✨ Generate QR Codes
+        </Link>
+      </div>
     </div>
   );
 }

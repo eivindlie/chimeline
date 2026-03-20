@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { exchangeCodeForToken, saveToken, fetchUserProfile, saveUser } from "../lib/spotifyAuth";
+import { exchangeCodeForToken, saveToken, fetchUserProfile, saveUser, getAndClearRedirectPath } from "../lib/spotifyAuth";
 
 export function meta() {
   return [{ title: "ChimeLine - Authenticating..." }];
@@ -61,9 +61,12 @@ export default function CallbackPage() {
         const userProfile = await fetchUserProfile(access_token);
         saveUser(userProfile);
 
-        // Success - redirect silently, don't set error
+        // Get redirect destination from localStorage (stored during auth initiation)
+        const redirectTo = getAndClearRedirectPath();
+
+        // Success - redirect to intended page or home
         if (isMounted) {
-          navigate("/");
+          navigate(redirectTo || "/");
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
