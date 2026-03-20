@@ -5,6 +5,7 @@ import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
 import { playViaSDK, pauseViaSDK, playTrack, pausePlayback } from "../lib/spotifyPlayback";
 import { startScanning, stopScanning } from "../lib/qrScanner";
+import { getToken as getSpotifyToken } from "../lib/spotifyAuth";
 import type { Html5Qrcode } from "html5-qrcode";
 import type { FullCardData } from "../lib/schemas";
 import styles from "./scanner.module.css";
@@ -125,7 +126,8 @@ export default function ScannerPage() {
 
         scannerRef.current = await startScanning(
           "qr-reader",
-          onScanCallback
+          onScanCallback,
+          () => getSpotifyToken()
         );
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";

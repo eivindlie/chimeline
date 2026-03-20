@@ -40,46 +40,30 @@ export const FullCardDataSchema = z.object({
 export type FullCardData = z.infer<typeof FullCardDataSchema>;
 
 /**
- * Minimal CardData - compact format for QR codes (single-letter keys)
- * u: spotifyUri (required for playback)
- * t: title (required for display)
- * a: artist (required for display)
- * d: releaseDate (required for game mechanics)
+ * Track Identifier - minimal format for QR codes (ID only)
+ * id: Spotify track ID (e.g., "6YPh5u1TRE0eN6kZ0KCfAV")
+ * Full metadata is fetched from Spotify API when QR is scanned
  */
-export const MinimalCardDataSchema = z.object({
-  u: z.string(), // spotifyUri
-  t: z.string(), // title
-  a: z.string(), // artist
-  d: z.string(), // releaseDate (YYYY-MM-DD)
+export const TrackIdentifierSchema = z.object({
+  id: z.string(), // Spotify track ID
 });
 
-export type MinimalCardData = z.infer<typeof MinimalCardDataSchema>;
+export type TrackIdentifier = z.infer<typeof TrackIdentifierSchema>;
 
 // Type alias for backwards compatibility in components
 export type CardData = FullCardData;
 
 /**
- * Convert full CardData to minimal format for QR encoding
+ * Convert full CardData to track identifier for QR encoding
+ * Extracts track ID from Spotify URI
  */
-export function toMinimalCardData(full: FullCardData): MinimalCardData {
-  return {
-    u: full.spotifyUri,
-    t: full.title,
-    a: full.artist,
-    d: full.releaseDate,
-  };
-}
-
-/**
- * Convert minimal CardData back to full format (for scanner)
- */
-export function toFullCardData(minimal: MinimalCardData): FullCardData {
-  return {
-    spotifyUri: minimal.u,
-    title: minimal.t,
-    artist: minimal.a,
-    releaseDate: minimal.d,
-  };
+export function toTrackIdentifier(full: FullCardData): TrackIdentifier {
+  // Extract track ID from "spotify:track:XXXXX" format
+  const id = full.spotifyUri.split(":").pop();
+  if (!id) {
+    throw new Error(`Invalid Spotify URI: ${full.spotifyUri}`);
+  }
+  return { id };
 }
 
 /**
@@ -93,11 +77,14 @@ export function parseFullCardData(data: unknown): FullCardData {
   return FullCardDataSchema.parse(data);
 }
 
-export function parseMinimalCardData(data: unknown): MinimalCardData {
+/**
+ * Parse track identifier from QR payload string
+ */
+export function parseTrackIdentifier(data: unknown): TrackIdentifier {
   // If data is a string, parse it as JSON first
   let parsed = data;
   if (typeof data === "string") {
     parsed = JSON.parse(data);
   }
-  return MinimalCardDataSchema.parse(parsed);
+  return TrackIdentifierSchema.parse(parsed);
 }

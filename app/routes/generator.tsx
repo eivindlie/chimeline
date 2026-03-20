@@ -4,7 +4,7 @@ import { getToken } from "../lib/spotifyAuth";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { generateQRFromTrackUrl } from "../lib/generateQRFromTrackUrl";
 import { downloadQRFromDataUrl } from "../lib/qrGenerator";
-import { toMinimalCardData, type CardData } from "../lib/schemas";
+import { toTrackIdentifier, type CardData } from "../lib/schemas";
 import styles from "./generator.module.css";
 
 export function meta({}: Route.MetaArgs) {
@@ -155,7 +155,7 @@ export default function GeneratorPage() {
 
           <h2>JSON Payload</h2>
           <pre className={styles.jsonPayload}>
-            {JSON.stringify(toMinimalCardData(cardData), null, 2)}
+            {JSON.stringify(toTrackIdentifier(cardData), null, 2)}
           </pre>
         </div>
       )}

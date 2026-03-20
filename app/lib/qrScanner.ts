@@ -1,13 +1,16 @@
 import { Html5Qrcode } from "html5-qrcode";
-import { parseMinimalCardData, toFullCardData, type FullCardData } from "./schemas";
+import { parseTrackIdentifier, type FullCardData } from "./schemas";
+import { fetchTrackById } from "./spotifySearch";
 
 /**
  * Start QR code scanning from a video element
  * Calls onScan callback with decoded FullCardData when valid QR is detected
+ * Fetches full metadata from Spotify API for each scanned track ID
  */
 export async function startScanning(
   videoElementId: string,
-  onScan: (cardData: FullCardData) => void
+  onScan: (cardData: FullCardData) => void,
+  getToken: () => string | null
 ): Promise<Html5Qrcode> {
   const scanner = new Html5Qrcode(videoElementId);
 
@@ -18,18 +21,26 @@ export async function startScanning(
         fps: 10,
         qrbox: { width: 250, height: 250 },
       },
-      (decodedText) => {
-        // Try to parse the QR payload as MinimalCardData
+      async (decodedText) => {
+        // Try to parse the QR payload as TrackIdentifier
         try {
           const qrString = decodedText.trim();
           console.debug("QR decoded text:", qrString);
-          const minimalData = parseMinimalCardData(qrString);
-          const fullData = toFullCardData(minimalData);
+          const trackId = parseTrackIdentifier(qrString);
+          
+          // Fetch full track metadata from Spotify
+          const token = getToken();
+          if (!token) {
+            console.warn("No Spotify token available for track fetching");
+            return;
+          }
+          
+          const fullData = await fetchTrackById(trackId.id, token);
           onScan(fullData);
         } catch (error) {
-          // Invalid QR format, ignore and continue scanning
+          // Invalid QR format or API error, ignore and continue scanning
           const errorMsg = error instanceof Error ? error.message : String(error);
-          console.warn("Invalid QR format - decoding error:", errorMsg);
+          console.warn("QR scanning error:", errorMsg);
           console.debug("Raw QR text:", decodedText);
         }
       },

@@ -1,5 +1,5 @@
 import QRCode from "qrcode";
-import { toMinimalCardData } from "./schemas";
+import { toTrackIdentifier } from "./schemas";
 import type { CardData } from "./schemas";
 
 const QR_CONFIG = {
@@ -8,11 +8,11 @@ const QR_CONFIG = {
 } as const;
 
 /**
- * Generate QR code as data URL (PNG) with minimal payload
+ * Generate QR code as data URL (PNG) with track ID payload
  */
 export async function generateQRCode(cardData: CardData): Promise<string> {
-  const minimalData = toMinimalCardData(cardData);
-  const jsonString = JSON.stringify(minimalData);
+  const trackId = toTrackIdentifier(cardData);
+  const jsonString = JSON.stringify(trackId);
 
   try {
     const qrDataUrl = await QRCode.toDataURL(jsonString, {
@@ -35,13 +35,13 @@ export async function generateQRCode(cardData: CardData): Promise<string> {
 }
 
 /**
- * Generate QR code to canvas element with minimal payload
+ * Generate QR code to canvas element with track ID payload
  */
 export async function generateQRCodeCanvas(
   cardData: CardData
 ): Promise<HTMLCanvasElement> {
-  const minimalData = toMinimalCardData(cardData);
-  const jsonString = JSON.stringify(minimalData);
+  const trackId = toTrackIdentifier(cardData);
+  const jsonString = JSON.stringify(trackId);
   const canvas = document.createElement("canvas");
 
   try {
@@ -64,13 +64,13 @@ export async function generateQRCodeCanvas(
 }
 
 /**
- * Generate QR code as blob for download with minimal payload
+ * Generate QR code as blob for download with track ID payload
  */
 export async function generateQRCodeBlob(
   cardData: CardData
 ): Promise<Blob> {
-  const minimalData = toMinimalCardData(cardData);
-  const jsonString = JSON.stringify(minimalData);
+  const trackId = toTrackIdentifier(cardData);
+  const jsonString = JSON.stringify(trackId);
   const canvas = document.createElement("canvas");
 
   try {
