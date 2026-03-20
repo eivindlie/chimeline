@@ -1,185 +1,129 @@
 import { useEffect, useState } from "react";
-import type { Route } from "./+types/setup";
-import { useAuthRedirect } from "../lib/useAuthRedirect";
-import { getToken } from "../lib/spotifyAuth";
-import {
-  fetchAvailableDevices,
-  saveSelectedDeviceId,
-  buildSpotifyTrackUri,
-  SILENCE_TRACK_ID,
-  type SpotifyDevice,
-} from "../lib/spotifyDevices";
+import { useNavigate } from "@react-router/react";
+import { fetchAvailableDevices, getSelectedDeviceId, saveSelectedDeviceId, SILENCE_TRACK_ID } from "~/lib/spotifyDevices";
 import styles from "./setup.module.css";
 
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "ChimeLine - Setup" },
-    { name: "description", content: "Set up your Spotify device" },
-  ];
-}
+export default function Setup() {
+  const navigate = useNavigate();
+  const [step, setStep] = useState<"welcome" | "processing" | "success" | "error">("welcome");
+  const [errorMessage, setErrorMessage] = useState("");
 
-export default function SetupPage() {
-  const [step, setStep] = useState<"welcome" | "linking" | "selecting">(
-    "welcome"
-  );
-  const [devices, setDevices] = useState<SpotifyDevice[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const getSpotifyRedirectUrl = () => {
+    const baseUrl = `https://open.spotify.com/track/${SILENCE_TRACK_ID}`;
+    return baseUrl;
+  };
 
-  // Check auth and redirect to login if needed
-  const isAuthed = useAuthRedirect("/setup");
-
-  useEffect(() => {
-    if (isAuthed) {
-      const t = getToken();
-      setToken(t);
-    }
-  }, [isAuthed]);
-
-  const handleStartSetup = () => {
-    setError(null);
-    setStep("linking");
+  const handleStartPlaying = () => {
+    setStep("processing");
+    window.location.href = getSpotifyRedirectUrl();
   };
 
   const handleReturnedFromApp = async () => {
-    if (!token) {
-      setError("Not authenticated");
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
     try {
-      const availableDevices = await fetchAvailableDevices(token);
-
-      if (availableDevices.length === 0) {
-        setError("No Spotify devices found. Make sure Spotify is open on at least one device.");
-        setIsLoading(false);
+      const token = sessionStorage.getItem("spotify_token");
+      if (!token) {
+        setErrorMessage("Authentication lost. Please log in again.");
+        setStep("error");
         return;
       }
 
-      // Auto-select the active device if one exists
-      const activeDevice = availableDevices.find((d) => d.is_active);
-      if (activeDevice) {
-        setSelectedDevice(activeDevice.id);
+      // Fetch available devices
+      const devices = await fetchAvailableDevices(token);
+      if (!devices || devices.length === 0) {
+        setErrorMessage("No devices found. Please ensure Spotify is running on at least one device.");
+        setStep("error");
+        return;
       }
 
-      setDevices(availableDevices);
-      setStep("selecting");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setError(message);
-    } finally {
-      setIsLoading(false);
+      // Select the active device, or fall back to the first device
+      const activeDevice = devices.find((d) => d.is_active) || devices[0];
+      if (!activeDevice) {
+        setErrorMessage("Could not select a device.");
+        setStep("error");
+        return;
+      }
+
+      // Save device and redirect to scanner
+      saveSelectedDeviceId(activeDevice.id);
+      setStep("success");
+
+      // Small delay for UX feedback before redirect
+      setTimeout(() => {
+        navigate("/scanner");
+      }, 800);
+    } catch (error) {
+      console.error("Error during device setup:", error);
+      setErrorMessage(error instanceof Error ? error.message : "An error occurred during setup.");
+      setStep("error");
     }
   };
 
-  const handleConfirmDevice = (deviceId: string) => {
-    saveSelectedDeviceId(deviceId);
-    setSelectedDevice(deviceId);
-    // Redirect to scanner
-    window.location.href = "/scanner";
-  };
+  useEffect(() => {
+    // Check if device already selected
+    if (getSelectedDeviceId()) {
+      navigate("/scanner");
+      return;
+    }
 
-  if (!isAuthed) {
-    return (
-      <div className={styles.container}>
-        <h1>Setup</h1>
-        <p>Redirecting to Spotify login...</p>
-      </div>
-    );
-  }
+    // Listen for visibility change (user returning from Spotify)
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        // Remove listener to prevent duplicate runs
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        await handleReturnedFromApp();
+      }
+    };
+
+    if (step === "processing") {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    }
+  }, [step, navigate]);
 
   return (
     <div className={styles.container}>
       {step === "welcome" && (
-        <div className={styles.step}>
-          <h1>🎵 ChimeLine Setup</h1>
-          <p>
-            To play songs during the game, we need to set up a Spotify device on
-            your network.
-          </p>
-          <p className={styles.subtitle}>
-            Don't worry – we'll use a silent song, so the mystery stays intact! 🤐
-          </p>
-
+        <div className={styles.card}>
+          <h1>Let's Set Up Playback</h1>
           <div className={styles.instructions}>
+            <p>To play songs during the game, we need to set up your Spotify device:</p>
             <ol>
-              <li>Click the button below</li>
-              <li>Spotify app will open with a silent song (John Cage's 4'33")</li>
-              <li>Hit play (or let it auto-play)</li>
-              <li>Return to this page to complete setup</li>
+              <li><strong>Click "Start Playing!"</strong> below</li>
+              <li>Spotify will open with a 4-minute silent song</li>
+              <li>Let it play (or just start it and quickly return)</li>
+              <li>Return to ChimeLine and we'll automatically set up your device</li>
             </ol>
+            <p className={styles.note}>💡 This only needs to happen once!</p>
           </div>
-
-          <a
-            href={buildSpotifyTrackUri(SILENCE_TRACK_ID)}
-            className={styles.button}
-            onClick={handleStartSetup}
-          >
-            Open Spotify to Activate Device
-          </a>
-
-          <p className={styles.hint}>
-            Make sure Spotify is installed on your device
-          </p>
-        </div>
-      )}
-
-      {step === "linking" && (
-        <div className={styles.step}>
-          <h1>🎸 Opening Spotify...</h1>
-          <p>
-            Spotify should have opened with a silent song. Once you've hit play,
-            click below to continue.
-          </p>
-
-          {error && <div className={styles.error}>{error}</div>}
-
-          <button
-            onClick={handleReturnedFromApp}
-            className={styles.button}
-            disabled={isLoading}
-          >
-            {isLoading ? "Loading devices..." : "I've returned to the browser"}
+          <button onClick={handleStartPlaying} className={styles.button}>
+            Start Playing!
           </button>
-
-          <p className={styles.hint}>
-            If Spotify didn't open, try installing the app or copy the link manually
-          </p>
         </div>
       )}
 
-      {step === "selecting" && (
-        <div className={styles.step}>
-          <h1>📱 Select Your Playback Device</h1>
-          <p>Choose which device will play the songs during the game:</p>
+      {step === "processing" && (
+        <div className={styles.card}>
+          <div className={styles.spinner}></div>
+          <h2>Opening Spotify...</h2>
+          <p>Let the silent song play, then return to ChimeLine.</p>
+        </div>
+      )}
 
-          {error && <div className={styles.error}>{error}</div>}
+      {step === "success" && (
+        <div className={styles.card}>
+          <div className={styles.success}>✓</div>
+          <h2>Device Ready!</h2>
+          <p>Redirecting to scanner...</p>
+        </div>
+      )}
 
-          <div className={styles.deviceList}>
-            {devices.map((device) => (
-              <div
-                key={device.id}
-                className={`${styles.deviceCard} ${
-                  selectedDevice === device.id ? styles.selected : ""
-                }`}
-                onClick={() => handleConfirmDevice(device.id)}
-              >
-                <div className={styles.deviceName}>{device.name}</div>
-                <div className={styles.deviceType}>
-                  {device.type} {device.is_active ? "🔊 (Active)" : ""}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p className={styles.hint}>
-            Click a device to select it as your playback device
-          </p>
+      {step === "error" && (
+        <div className={styles.card + " " + styles.error}>
+          <h2>Setup Failed</h2>
+          <p className={styles.errorMessage}>{errorMessage}</p>
+          <button onClick={() => setStep("welcome")} className={styles.button}>
+            Try Again
+          </button>
         </div>
       )}
     </div>
