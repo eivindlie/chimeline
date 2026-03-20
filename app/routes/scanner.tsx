@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "@react-router/react";
+import { useNavigate } from "react-router";
 import type { Route } from "./+types/scanner";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";

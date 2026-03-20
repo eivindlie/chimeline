@@ -14,38 +14,27 @@ export default function Home() {
       <h1>ChimeLine</h1>
       <p>Play songs during a timeline-based card game using QR codes.</p>
 
-      <div style={{ marginTop: "2rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+      <div style={{ marginTop: "3rem" }}>
         <Link to="/setup" style={{
-          padding: "1rem 2rem",
-          fontSize: "1.1rem",
+          display: "inline-block",
+          padding: "1.5rem 3rem",
+          fontSize: "1.3rem",
+          fontWeight: "600",
           backgroundColor: "#1DB954",
           color: "white",
           textDecoration: "none",
-          borderRadius: "8px",
-        }}>
-          🎵 Setup Device
+          borderRadius: "32px",
+          transition: "all 0.2s ease",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1ed760")}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#1DB954")}
+        >
+          🎵 Start Playing!
         </Link>
-        <Link to="/scanner" style={{
-          padding: "1rem 2rem",
-          fontSize: "1.1rem",
-          backgroundColor: "#1DB954",
-          color: "white",
-          textDecoration: "none",
-          borderRadius: "8px",
-        }}>
-          📱 Scan QR Codes
-        </Link>
-        <Link to="/generator" style={{
-          padding: "1rem 2rem",
-          fontSize: "1.1rem",
-          backgroundColor: "#191414",
-          color: "white",
-          textDecoration: "none",
-          borderRadius: "8px",
-          border: "2px solid #1DB954",
-        }}>
-          ✨ Generate QR Codes
-        </Link>
+      </div>
+
+      <div style={{ marginTop: "2rem", fontSize: "0.9rem", color: "#666" }}>
+        <p>Device setup is quick and happens only once.</p>
       </div>
     </div>
   );

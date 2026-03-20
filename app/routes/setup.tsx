@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@react-router/react";
+import { useNavigate } from "react-router";
 import { fetchAvailableDevices, getSelectedDeviceId, saveSelectedDeviceId, SILENCE_TRACK_ID } from "~/lib/spotifyDevices";
 import styles from "./setup.module.css";
 
