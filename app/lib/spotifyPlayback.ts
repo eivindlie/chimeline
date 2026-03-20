@@ -48,6 +48,37 @@ export async function playTrack(player: any, spotifyUri: string, deviceId: strin
 }
 
 /**
+ * Pause playback via REST API on a specific device
+ * Used when we don't have the player SDK instance (e.g., during setup)
+ */
+export async function pausePlaybackOnDevice(deviceId: string): Promise<void> {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Not authenticated with Spotify");
+  }
+
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMsg = errorData.error?.message || response.statusText;
+      throw new Error(`REST API returned ${response.status}: ${errorMsg}`);
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("Pause failed:", errMsg);
+    // Non-blocking - don't fail the setup if pause fails
+  }
+}
+
+/**
  * Pause playback via REST API
  * Optionally targets a specific device via deviceId
  */

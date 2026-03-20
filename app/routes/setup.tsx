@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuthRedirect } from "~/lib/useAuthRedirect";
+import { pausePlaybackOnDevice } from "~/lib/spotifyPlayback";
 import { fetchAvailableDevices, getSelectedDeviceId, saveSelectedDeviceId, SETUP_TRACK_ID } from "~/lib/spotifyDevices";
 import styles from "./setup.module.css";
 
@@ -55,8 +56,17 @@ export default function Setup() {
         return;
       }
 
-      // Save device and redirect to scanner
+      // Save device
       saveSelectedDeviceId(activeDevice.id);
+
+      // Pause playback so they don't hear Chariots of Fire when they return
+      try {
+        await pausePlaybackOnDevice(activeDevice.id);
+      } catch (err) {
+        console.warn("Could not pause playback, but device is ready:", err);
+        // Non-blocking error - device is still set up correctly
+      }
+
       setStep("success");
 
       // Small delay for UX feedback before redirect
