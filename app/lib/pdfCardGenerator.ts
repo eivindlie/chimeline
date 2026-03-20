@@ -57,11 +57,12 @@ export async function generateCardsPDFFromTracks(
         const qrUrl = trackQRs.get(`${track.spotifyUri}-${track.title}`);
         return {
           image: qrUrl || '',
-          fit: [184, 184], // ~65mm at 72dpi
+          fit: [179, 179], // Slightly smaller to fit in 185pt row with padding
           alignment: 'center' as const,
+          valign: 'middle' as const,
           border: [1, 1, 1, 1] as [number, number, number, number],
           borderColor: '#e0e0e0',
-          margin: [2, 2, 2, 2] as [number, number, number, number],
+          margin: [3, 3, 3, 3] as [number, number, number, number],
         };
       });
 
@@ -85,11 +86,11 @@ export async function generateCardsPDFFromTracks(
         return {
           text: `${track.title}\n${track.artist}`,
           alignment: 'center' as const,
-          valign: 'center' as const,
+          valign: 'middle' as const,
           fontSize: 9,
           border: [1, 1, 1, 1] as [number, number, number, number],
           borderColor: '#e0e0e0',
-          margin: [4, 4, 4, 4] as [number, number, number, number],
+          margin: [3, 3, 3, 3] as [number, number, number, number],
         };
       });
 
@@ -127,6 +128,7 @@ export async function generateCardsPDFFromTracks(
         {
           table: {
             widths: ['*', '*', '*'], // 3 equal columns
+            heights: new Array(qrTableBody.length).fill(185), // 65mm ≈ 185 points
             body: qrTableBody,
             headerRows: 0,
           },
@@ -158,6 +160,7 @@ export async function generateCardsPDFFromTracks(
         {
           table: {
             widths: ['*', '*', '*'], // 3 equal columns
+            heights: new Array(titleTableBody.length).fill(185), // 65mm ≈ 185 points, same as QR side
             body: titleTableBody,
             headerRows: 0,
           },
