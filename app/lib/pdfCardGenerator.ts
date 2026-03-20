@@ -103,8 +103,22 @@ export async function generateCardsPDFFromTracks(
         const cells: Record<string, unknown>[] = rowTracks.map((track) => {
           const qrUrl = trackQRs.get(`${track.spotifyUri}-${track.title}`);
           return {
-            image: qrUrl || '',
-            fit: [140, 140],
+            stack: [
+              {
+                image: watermarkDataUrl || '',
+                width: 170,
+                height: 170,
+                alignment: 'center',
+                opacity: 1,
+                margin: [0, -10, 0, -160],
+              },
+              {
+                image: qrUrl || '',
+                fit: [140, 140],
+                alignment: 'center',
+                verticalAlignment: 'middle',
+              },
+            ],
             alignment: 'center',
             verticalAlignment: 'middle',
             border: [1, 1, 1, 1],
