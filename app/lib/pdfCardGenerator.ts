@@ -107,10 +107,9 @@ export async function generateCardsPDFFromTracks(
       titleTableBody.push(cells);
     }
 
-    // Reverse rows and columns for long-edge flip alignment
-    const reversedTitleBody = titleTableBody
-      .reverse() // Reverse row order
-      .map((row) => [...row].reverse()); // Reverse column order in each row
+    // Reverse columns only for long-edge flip alignment
+    // (flip on the vertical axis - like turning a page in a book)
+    const reversedTitleBody = titleTableBody.map((row) => [...row].reverse());
 
     // Create the document definition with both pages
     const docDef: any = {
