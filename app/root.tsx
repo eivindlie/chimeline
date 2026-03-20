@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 import type { Route } from "./+types/root";
+import { useServiceWorkerUpdate } from "./lib/useServiceWorkerUpdate";
 import "./app.css";
 import styles from "./root.module.css";
 
@@ -48,6 +49,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { updateAvailable, handleUpdate } = useServiceWorkerUpdate();
 
   useEffect(() => {
     // Check if user is logged in (has spotify_token in sessionStorage)
@@ -94,6 +96,35 @@ export default function App() {
 
   return (
     <div className={styles.root}>
+      {updateAvailable && (
+        <div style={{
+          background: "#1DB954",
+          color: "white",
+          padding: "1rem",
+          textAlign: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "1rem",
+          fontSize: "0.95rem",
+        }}>
+          <span>✨ A new version is available</span>
+          <button
+            onClick={handleUpdate}
+            style={{
+              backgroundColor: "white",
+              color: "#1DB954",
+              border: "none",
+              padding: "0.5rem 1rem",
+              borderRadius: "4px",
+              fontWeight: "600",
+              cursor: "pointer",
+            }}
+          >
+            Update
+          </button>
+        </div>
+      )}
       <header className={styles.header}>
         <Link to="/" className={styles.headerTitle}>
           <h1>ChimeLine</h1>
