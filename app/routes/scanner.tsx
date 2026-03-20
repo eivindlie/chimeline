@@ -1,13 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Route } from "./+types/scanner";
-import { getToken } from "../lib/spotifyAuth";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
 import { playViaSDK, pauseViaSDK, playTrack, pausePlayback } from "../lib/spotifyPlayback";
-import { startScanning, stopScanning } from "../lib/qrScanner";
-import { getToken as getSpotifyToken } from "../lib/spotifyAuth";
-import { fetchTrackById } from "../lib/spotifySearch";
-import type { Html5Qrcode } from "html5-qrcode";
+import { scanQRCode, stopScanning } from "../lib/qrScanner";
+import { getToken } from "../lib/spotifyAuth";
+import { fetchTrackMetadata } from "../lib/trackMetadata";
 import type { FullCardData } from "../lib/schemas";
 import styles from "./scanner.module.css";
 
@@ -19,7 +17,6 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function ScannerPage() {
-  const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,12 +51,8 @@ export default function ScannerPage() {
     setIsScanning(true);
   };
 
-  const handleStopScanning = async () => {
+  const handleStopScanning = () => {
     setIsScanning(false);
-    if (scannerRef.current) {
-      await stopScanning(scannerRef.current);
-      scannerRef.current = null;
-    }
   };
 
   const handlePlay = useCallback(
@@ -121,38 +114,38 @@ export default function ScannerPage() {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       try {
-        const onScanCallback = async (trackId: string) => {
-          setError(null);
-          setIsLoadingTrack(true);
-          setIsScanning(false);
+        setError(null);
+        setIsLoadingTrack(false);
 
-          try {
-            if (!token) {
-              throw new Error("Not authenticated with Spotify");
-            }
+        console.debug("Scanner: Waiting for QR code...");
 
-            // Fetch full track metadata from Spotify
-            const fullData = await fetchTrackById(trackId, token);
-            setLastScanned(fullData);
+        // Step 1: Scan QR and get track ID
+        const trackId = await scanQRCode("qr-reader");
+        console.debug("Scanner: Got track ID:", trackId);
+        setIsScanning(false);
 
-            // Auto-play the track
-            await handlePlay(fullData);
-          } catch (err) {
-            const message = err instanceof Error ? err.message : "Unknown error";
-            setError(`Failed to load track: ${message}`);
-            setLastScanned(null);
-          } finally {
-            setIsLoadingTrack(false);
-          }
-        };
+        // Step 2: Fetch metadata from Spotify
+        setIsLoadingTrack(true);
 
-        scannerRef.current = await startScanning(
-          "qr-reader",
-          onScanCallback
-        );
+        if (!token) {
+          throw new Error("Not authenticated with Spotify");
+        }
+
+        console.debug("Scanner: Fetching metadata...");
+        const fullData = await fetchTrackMetadata(trackId, token);
+        console.debug("Scanner: Got metadata:", fullData.title);
+        setLastScanned(fullData);
+
+        // Step 3: Auto-play the track
+        console.debug("Scanner: Starting playback...");
+        await handlePlay(fullData);
+        console.debug("Scanner: Playback started");
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
+        console.error("Scanner error:", message);
         setError(message);
+        setLastScanned(null);
+        setIsLoadingTrack(false);
         setIsScanning(false);
       }
     };
@@ -160,10 +153,8 @@ export default function ScannerPage() {
     startScannerWhenReady();
 
     return () => {
-      // Cleanup if component unmounts
-      if (scannerRef.current) {
-        stopScanning(scannerRef.current);
-      }
+      // Cleanup: ensure scanner stops if component unmounts
+      stopScanning();
     };
   }, [isScanning, handlePlay, token]);
 
