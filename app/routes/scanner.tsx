@@ -6,6 +6,7 @@ import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
 import { playViaSDK, pauseViaSDK, playTrack, pausePlayback } from "../lib/spotifyPlayback";
 import { startScanning, stopScanning } from "../lib/qrScanner";
 import { getToken as getSpotifyToken } from "../lib/spotifyAuth";
+import { fetchTrackById } from "../lib/spotifySearch";
 import type { Html5Qrcode } from "html5-qrcode";
 import type { FullCardData } from "../lib/schemas";
 import styles from "./scanner.module.css";
@@ -20,6 +21,7 @@ export function meta({}: Route.MetaArgs) {
 export default function ScannerPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastScanned, setLastScanned] = useState<FullCardData | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -119,15 +121,34 @@ export default function ScannerPage() {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       try {
-        const onScanCallback = (cardData: FullCardData) => {
-          setLastScanned(cardData);
-          handlePlay(cardData);
+        const onScanCallback = async (trackId: string) => {
+          setError(null);
+          setIsLoadingTrack(true);
+          setIsScanning(false);
+
+          try {
+            if (!token) {
+              throw new Error("Not authenticated with Spotify");
+            }
+
+            // Fetch full track metadata from Spotify
+            const fullData = await fetchTrackById(trackId, token);
+            setLastScanned(fullData);
+
+            // Auto-play the track
+            await handlePlay(fullData);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : "Unknown error";
+            setError(`Failed to load track: ${message}`);
+            setLastScanned(null);
+          } finally {
+            setIsLoadingTrack(false);
+          }
         };
 
         scannerRef.current = await startScanning(
           "qr-reader",
-          onScanCallback,
-          () => getSpotifyToken()
+          onScanCallback
         );
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
@@ -144,7 +165,7 @@ export default function ScannerPage() {
         stopScanning(scannerRef.current);
       }
     };
-  }, [isScanning, handlePlay]);
+  }, [isScanning, handlePlay, token]);
 
   if (!isAuthed) {
     return (
@@ -185,7 +206,13 @@ export default function ScannerPage() {
 
       {error && <div className={styles.error}>{error}</div>}
 
-      {lastScanned && (
+      {isLoadingTrack && (
+        <div className={styles.loadingMessage}>
+          <p>🎵 Loading track...</p>
+        </div>
+      )}
+
+      {lastScanned && !isLoadingTrack && (
         <div className={styles.trackInfo}>
           <h2>Last Scanned</h2>
           <p>

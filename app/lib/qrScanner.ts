@@ -4,13 +4,13 @@ import { fetchTrackById } from "./spotifySearch";
 
 /**
  * Start QR code scanning from a video element
- * Calls onScan callback with decoded FullCardData when valid QR is detected
- * Fetches full metadata from Spotify API for each scanned track ID
+ * Calls onScan callback with track ID when valid QR is detected
+ * Scanner closes immediately after detecting a QR code
+ * Component is responsible for fetching metadata and playback
  */
 export async function startScanning(
   videoElementId: string,
-  onScan: (cardData: FullCardData) => void,
-  getToken: () => string | null
+  onScan: (trackId: string) => void
 ): Promise<Html5Qrcode> {
   const scanner = new Html5Qrcode(videoElementId);
 
@@ -28,19 +28,20 @@ export async function startScanning(
           console.debug("QR decoded text:", qrString);
           const trackId = parseTrackIdentifier(qrString);
           
-          // Fetch full track metadata from Spotify
-          const token = getToken();
-          if (!token) {
-            console.warn("No Spotify token available for track fetching");
-            return;
+          // Close scanner immediately
+          try {
+            await scanner.stop();
+            await scanner.clear();
+          } catch (closeError) {
+            console.warn("Error closing scanner:", closeError);
           }
           
-          const fullData = await fetchTrackById(trackId.id, token);
-          onScan(fullData);
+          // Pass track ID to component for async processing
+          onScan(trackId.id);
         } catch (error) {
-          // Invalid QR format or API error, ignore and continue scanning
+          // Invalid QR format, continue scanning
           const errorMsg = error instanceof Error ? error.message : String(error);
-          console.warn("QR scanning error:", errorMsg);
+          console.warn("QR parsing error:", errorMsg);
           console.debug("Raw QR text:", decodedText);
         }
       },
