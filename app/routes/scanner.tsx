@@ -9,6 +9,7 @@ import { getToken } from "../lib/spotifyAuth";
 import { getSelectedDeviceId } from "../lib/spotifyDevices";
 import { fetchTrackMetadata } from "../lib/trackMetadata";
 import type { FullCardData } from "../lib/schemas";
+import LogoIcon from "../assets/logo-icon-dark.svg";
 import styles from "./scanner.module.css";
 
 /**
@@ -235,6 +236,11 @@ export default function ScannerPage() {
 
   return (
     <div className={styles.container}>
+      {/* Logo header */}
+      <div className={styles.logoHeader}>
+        <img src={LogoIcon} alt="ChimeLine" className={styles.logo} />
+      </div>
+
       {/* Initial state: Just scan button */}
       {!lastScanned && !isScanning && (
         <button
