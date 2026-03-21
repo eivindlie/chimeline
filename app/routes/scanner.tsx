@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import type { Route } from "./+types/scanner";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
+import { useDeviceKeepAlive } from "../lib/useDeviceKeepAlive";
 import { playTrack, pausePlayback, resumePlayback } from "../lib/spotifyPlayback";
 import { scanQRCode, stopScanning } from "../lib/qrScanner";
 import { getToken } from "../lib/spotifyAuth";
@@ -65,6 +66,10 @@ export default function ScannerPage() {
   const { playerReady, isPlaying: sdkIsPlaying, player, deviceId, error: playerError } = useSpotifyPlayer(
     isDesktop() ? token : null
   );
+
+  // Keep mobile device alive with periodic pings (every 8 seconds)
+  // Spotify drops mobile devices from registry after ~10 seconds of inactivity
+  useDeviceKeepAlive(token, selectedDeviceId, !isDesktop());
 
   // Update playing state from SDK
   useEffect(() => {
