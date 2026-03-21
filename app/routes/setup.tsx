@@ -30,12 +30,8 @@ export default function Setup() {
     return `https://open.spotify.com/track/${SETUP_TRACK_ID}`;
   };
 
-  // Check if already set up and redirect
-  useEffect(() => {
-    if (getSelectedDeviceId()) {
-      navigate("/scanner");
-    }
-  }, [navigate]);
+  // Device ID should be cleared by home page, but just in case
+  // we won't auto-redirect here - let user go through setup flow
 
   // Set token when authenticated
   useEffect(() => {
@@ -162,8 +158,9 @@ export default function Setup() {
       {step === "welcome" && (
         <div className={styles.card}>
           <div className={styles.instructions}>
-            <p>Click to test your playback device.</p>
-            <p>Listen for an iconic theme—verify you hear sound. 🔊</p>
+            <p>Click the button to open Spotify.</p>
+            <p>Listen for an iconic theme—verify you hear sound.</p>
+            <p>Return to the app when ready. ✨</p>
           </div>
           <button onClick={handleStartPlaying} className={styles.button}>
             Test Device
