@@ -102,7 +102,6 @@ export default function ScannerPage() {
         // navigate("/setup");
         return;
       }
-      }
 
       // On desktop, SDK must be ready; on mobile, REST API works fine
       if (isDesktop() && !playerReady) {
