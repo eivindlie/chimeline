@@ -1,131 +1,122 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { getToken } from "~/lib/spotifyAuth";
 import { useAuthRedirect } from "~/lib/useAuthRedirect";
-import { pausePlaybackOnDevice } from "~/lib/spotifyPlayback";
-import { fetchAvailableDevices, getSelectedDeviceId, saveSelectedDeviceId, SETUP_TRACK_ID } from "~/lib/spotifyDevices";
+import { useSpotifyPlayer } from "~/lib/useSpotifyPlayer";
+import { playTrack, pausePlayback } from "~/lib/spotifyPlayback";
+import { saveSelectedDeviceId, getSelectedDeviceId, SETUP_TRACK_ID, buildSpotifyTrackUri } from "~/lib/spotifyDevices";
 import styles from "./setup.module.css";
 
 export default function Setup() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<"welcome" | "processing" | "success" | "error">("welcome");
+  const [step, setStep] = useState<"welcome" | "playing" | "success" | "error">("welcome");
   const [errorMessage, setErrorMessage] = useState("");
+  const [token, setToken] = useState<string | null>(null);
   
   // Check auth and redirect to login if needed
   const isAuthed = useAuthRedirect("/setup");
 
-  const getSpotifyRedirectUrl = () => {
-    // Open Chariots of Fire in Spotify - iconic theme, user confirms device works
-    return `https://open.spotify.com/track/${SETUP_TRACK_ID}`;
-  };
-
   const isDesktop = () => {
-    // Check if device has touch capability (mobile) or not (desktop)
     return !('ontouchstart' in window) && !navigator.maxTouchPoints;
   };
 
-  const handleStartPlaying = () => {
-    setStep("processing");
-    
-    if (isDesktop()) {
-      // Desktop: Open in new tab so visibilitychange event still fires
-      window.open(getSpotifyRedirectUrl(), '_blank');
-      
-      // Listen for visibility change (user returning from Spotify tab)
-      const handleVisibilityChange = async () => {
-        if (document.visibilityState === "visible") {
-          // Remove listener to prevent duplicate runs
-          document.removeEventListener("visibilitychange", handleVisibilityChange);
-          await handleReturnedFromApp();
-        }
-      };
-      
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-    } else {
-      // Mobile: Navigate in same tab (deep linking to Spotify app)
-      window.location.href = getSpotifyRedirectUrl();
-    }
+  // Initialize SDK on desktop only
+  const { playerReady, player, deviceId, error: playerError } = useSpotifyPlayer(
+    isDesktop() && step === "playing" && isAuthed ? token : null
+  );
+
+  // Get Spotify URL for mobile
+  const getSpotifyRedirectUrl = () => {
+    return `https://open.spotify.com/track/${SETUP_TRACK_ID}`;
   };
 
-  const handleReturnedFromApp = async () => {
-    if (!isAuthed) {
-      setErrorMessage("Authentication lost. Please try again.");
-      setStep("error");
-      return;
-    }
-
-    try {
-      const token = sessionStorage.getItem("spotify_token");
-      if (!token) {
-        setErrorMessage("Authentication lost. Please log in again.");
-        setStep("error");
-        return;
-      }
-
-      // Fetch available devices
-      const devices = await fetchAvailableDevices(token);
-      if (!devices || devices.length === 0) {
-        setErrorMessage("No devices found. Please ensure Spotify is running on at least one device.");
-        setStep("error");
-        return;
-      }
-
-      // Select the active device, or fall back to the first device
-      const activeDevice = devices.find((d) => d.is_active) || devices[0];
-      if (!activeDevice) {
-        setErrorMessage("Could not select a device.");
-        setStep("error");
-        return;
-      }
-
-      // Save device
-      saveSelectedDeviceId(activeDevice.id);
-
-      // Pause playback so they don't hear Chariots of Fire when they return
-      try {
-        await pausePlaybackOnDevice(activeDevice.id);
-      } catch (err) {
-        console.warn("Could not pause playback, but device is ready:", err);
-        // Non-blocking error - device is still set up correctly
-      }
-
-      setStep("success");
-
-      // Small delay for UX feedback before redirect
-      setTimeout(() => {
-        navigate("/scanner");
-      }, 800);
-    } catch (error) {
-      console.error("Error during device setup:", error);
-      setErrorMessage(error instanceof Error ? error.message : "An error occurred during setup.");
-      setStep("error");
-    }
-  };
-
+  // Check if already set up and redirect
   useEffect(() => {
-    // Check if device already selected
     if (getSelectedDeviceId()) {
       navigate("/scanner");
+    }
+  }, [navigate]);
+
+  // Set token when authenticated
+  useEffect(() => {
+    if (isAuthed) {
+      const t = getToken();
+      setToken(t);
+    }
+  }, [isAuthed]);
+
+  // Desktop: Play via SDK when ready
+  useEffect(() => {
+    if (!isDesktop() || step !== "playing" || !playerReady || !player || !deviceId || !token) {
       return;
     }
 
-    // Only set up listener for mobile on processing step
-    // Desktop already sets up listener in handleStartPlaying
-    if (step === "processing" && isAuthed && !isDesktop()) {
-      // Listen for visibility change (user returning from Spotify)
-      const handleVisibilityChange = async () => {
-        if (document.visibilityState === "visible") {
-          // Remove listener to prevent duplicate runs
-          document.removeEventListener("visibilitychange", handleVisibilityChange);
-          await handleReturnedFromApp();
-        }
-      };
+    const playSetupTrack = async () => {
+      try {
+        // Play Chariots of Fire using the SDK
+        const trackUri = buildSpotifyTrackUri(SETUP_TRACK_ID);
+        await playTrack(player, trackUri, deviceId);
+        
+        // Save the device ID
+        saveSelectedDeviceId(deviceId);
 
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-      return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+        // Give user time to hear the music (3 seconds)
+        // Then pause and redirect to scanner
+        setTimeout(async () => {
+          try {
+            await pausePlayback(player, deviceId);
+          } catch (err) {
+            console.warn("Could not pause, but device is ready:", err);
+          }
+          
+          setStep("success");
+          setTimeout(() => {
+            navigate("/scanner");
+          }, 800);
+        }, 3000);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to play test track";
+        console.error("Desktop setup playback error:", message);
+        setErrorMessage(message);
+        setStep("error");
+      }
+    };
+
+    playSetupTrack();
+  }, [isDesktop, step, playerReady, player, deviceId, token, navigate]);
+
+  // Mobile: Redirect to Spotify app
+  const handleMobileSetup = () => {
+    setStep("playing");
+    
+    // Set up listener for when user returns from Spotify
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        
+        // After returning from Spotify, go to scanner
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setStep("success");
+        setTimeout(() => {
+          navigate("/scanner");
+        }, 800);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.location.href = getSpotifyRedirectUrl();
+  };
+
+  const handleStartPlaying = () => {
+    if (isDesktop()) {
+      // Desktop: Start SDK and play directly
+      setStep("playing");
+    } else {
+      // Mobile: Redirect to Spotify app
+      handleMobileSetup();
     }
-  }, [step, isAuthed, navigate]);
+  };
 
-  // Show loading state while auth is being checked
   if (!isAuthed) {
     return (
       <div className={styles.container}>
@@ -142,20 +133,19 @@ export default function Setup() {
       {step === "welcome" && (
         <div className={styles.card}>
           <div className={styles.instructions}>
-            <p>Click the button to open Spotify.</p>
-            <p>Listen for an iconic theme—verify you hear sound.</p>
-            <p>Return to the app when ready. ✨</p>
+            <p>Click to test your playback device.</p>
+            <p>Listen for an iconic theme—verify you hear sound. 🔊</p>
           </div>
           <button onClick={handleStartPlaying} className={styles.button}>
-            Open Spotify
+            Test Device
           </button>
         </div>
       )}
 
-      {step === "processing" && (
+      {step === "playing" && (
         <div className={styles.card}>
           <div className={styles.spinner}></div>
-          <p>Setting up...</p>
+          <p>{isDesktop() ? "Playing test track..." : "Setting up..."}</p>
         </div>
       )}
 

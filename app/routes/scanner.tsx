@@ -39,6 +39,11 @@ export default function ScannerPage() {
   // Check auth and redirect to login if needed
   const isAuthed = useAuthRedirect("/scanner");
 
+  // Detect device type
+  const isDesktop = () => {
+    return !('ontouchstart' in window) && !navigator.maxTouchPoints;
+  };
+
   // Initialize token and device ID once authenticated
   useEffect(() => {
     if (isAuthed) {
@@ -55,16 +60,19 @@ export default function ScannerPage() {
     }
   }, [isAuthed, navigate]);
 
-  // Manage Spotify playback SDK
+  // Manage Spotify playback SDK (desktop only)
+  // Mobile uses the stored device ID from setup and REST API directly
   const { playerReady, isPlaying: sdkIsPlaying, player, deviceId, error: playerError } = useSpotifyPlayer(
-    token
+    isDesktop() ? token : null
   );
 
   // Update playing state from SDK
   useEffect(() => {
-    setIsPlaying(sdkIsPlaying);
-    if (playerError) {
-      console.warn("Player error:", playerError);
+    if (isDesktop()) {
+      setIsPlaying(sdkIsPlaying);
+      if (playerError) {
+        console.warn("Player error:", playerError);
+      }
     }
   }, [sdkIsPlaying, playerError]);
 
@@ -84,12 +92,16 @@ export default function ScannerPage() {
         return;
       }
 
-      if (!selectedDeviceId) {
-        setError("No device configured. Go to setup.");
+      // Determine which device ID to use
+      const targetDeviceId = isDesktop() ? deviceId : selectedDeviceId;
+
+      if (!targetDeviceId) {
+        setError("Device not ready. Try setup again.");
         return;
       }
 
-      if (!playerReady || !player) {
+      // On desktop, SDK must be ready
+      if (isDesktop() && (!playerReady || !player)) {
         setError("Playback not ready. Try refreshing.");
         console.error("Player not initialized", { playerReady, playerExists: !!player });
         return;
@@ -101,7 +113,9 @@ export default function ScannerPage() {
       setIsPlaying(true);
 
       try {
-        await playTrack(player, cardData.spotifyUri, selectedDeviceId);
+        // Desktop: use SDK player with SDK device ID
+        // Mobile: use REST API with stored device ID
+        await playTrack(player, cardData.spotifyUri, targetDeviceId);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Failed to play track:", message);
@@ -117,11 +131,20 @@ export default function ScannerPage() {
         setError(`Playback failed: ${message}`);
       }
     },
-    [token, playerReady, player, selectedDeviceId, navigate]
+    [token, isDesktop, playerReady, player, deviceId, selectedDeviceId, navigate]
   );
 
   const handlePause = useCallback(async () => {
-    if (!playerReady || !player) {
+    // Determine which device ID to use
+    const targetDeviceId = isDesktop() ? deviceId : selectedDeviceId;
+
+    if (!targetDeviceId) {
+      setError("Device not ready");
+      return;
+    }
+
+    // On desktop, SDK must be ready
+    if (isDesktop() && (!playerReady || !player)) {
       setError("Playback not available");
       return;
     }
@@ -129,7 +152,8 @@ export default function ScannerPage() {
     setError(null);
 
     try {
-      await pausePlayback(player, selectedDeviceId);
+      // Desktop: use SDK player; Mobile: use REST API with stored device
+      await pausePlayback(player, targetDeviceId);
       setIsPlaying(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -142,7 +166,7 @@ export default function ScannerPage() {
       
       setError(`Pause failed: ${message}`);
     }
-  }, [playerReady, player, selectedDeviceId, navigate]);
+  }, [isDesktop, playerReady, player, deviceId, selectedDeviceId, navigate]);
 
   const handlePlayPause = useCallback(async () => {
     if (!lastScanned) return;
@@ -154,7 +178,15 @@ export default function ScannerPage() {
       setIsPlaying(true);
       
       try {
-        await resumePlayback(player, selectedDeviceId);
+        // Determine which device ID to use
+        const targetDeviceId = isDesktop() ? deviceId : selectedDeviceId;
+        
+        if (!targetDeviceId) {
+          throw new Error("Device not ready");
+        }
+        
+        // Desktop: use SDK player; Mobile: use REST API with stored device
+        await resumePlayback(player, targetDeviceId);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Resume failed:", message);
@@ -170,7 +202,7 @@ export default function ScannerPage() {
         setError(`Resume failed: ${message}`);
       }
     }
-  }, [isPlaying, lastScanned, player, selectedDeviceId, handlePause, navigate]);
+  }, [isPlaying, lastScanned, isDesktop, player, deviceId, selectedDeviceId, handlePause, navigate]);
 
   const handleScanNext = useCallback(async () => {
     // Pause current playback
