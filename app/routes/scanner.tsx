@@ -162,12 +162,16 @@ export default function ScannerPage() {
     }
   }, [isPlaying, lastScanned, player, selectedDeviceId, handlePause, navigate]);
 
-  const handleScanNext = useCallback(() => {
+  const handleScanNext = useCallback(async () => {
+    // Pause current playback
+    await handlePause();
+    
+    // Reset state and start scanning again
     setLastScanned(null);
     setIsLoadingTrack(false);
     setError(null);
     setIsScanning(true);
-  }, []);
+  }, [handlePause]);
 
   // Start scanner when isScanning becomes true
   useEffect(() => {
