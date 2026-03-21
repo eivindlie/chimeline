@@ -60,8 +60,9 @@ export default function ScannerPage() {
       const savedDeviceId = getSelectedDeviceId();
       setSelectedDeviceId(savedDeviceId);
       
-      // Redirect to setup if device not selected
-      if (!savedDeviceId) {
+      // Desktop uses SDK (no saved device needed)
+      // Mobile requires saved device for REST API
+      if (!isDesktop() && !savedDeviceId) {
         navigate("/setup");
       }
     }
