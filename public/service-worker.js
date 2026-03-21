@@ -1,6 +1,8 @@
 /* Service Worker for ChimeLine PWA */
 
-const CACHE_NAME = "chimeline-v1";
+// Versioned cache name - update this string to invalidate cache on new deployment
+// Format: chimeline-YYYY-MM-DD-HHmm (increment when deploying)
+const CACHE_NAME = "chimeline-2026-03-21-1630";
 const urlsToCache = ["/", "/index.html"];
 
 // Install event - cache assets
