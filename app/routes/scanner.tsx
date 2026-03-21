@@ -96,13 +96,18 @@ export default function ScannerPage() {
       }
 
       setError(null);
+      
+      // Set playing immediately for optimistic UI feedback
+      setIsPlaying(true);
 
       try {
         await playTrack(player, cardData.spotifyUri, selectedDeviceId);
-        setIsPlaying(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Failed to play track:", message);
+        
+        // Reset state if playback failed
+        setIsPlaying(false);
         
         if (message.includes("Setup required")) {
           navigate("/setup");
@@ -145,12 +150,17 @@ export default function ScannerPage() {
     if (isPlaying) {
       await handlePause();
     } else {
+      // Set playing immediately for optimistic UI feedback
+      setIsPlaying(true);
+      
       try {
         await resumePlayback(player, selectedDeviceId);
-        setIsPlaying(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Resume failed:", message);
+        
+        // Reset state if playback failed
+        setIsPlaying(false);
           
         if (message.includes("Setup required")) {
           navigate("/setup");

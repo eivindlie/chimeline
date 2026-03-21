@@ -171,9 +171,31 @@
   transform: scale(0.95);
 }
 
+/* Disable hover/active transforms while playing to allow animation */
+.playButton.playing:hover {
+  transform: none;
+}
+
+.playButton.playing:active {
+  transform: none;
+}
+
 /* Pulsing animation while playing */
 .playButton.playing {
-  animation: pulse-combined 2s ease-in-out infinite;
+  animation: scannerPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes scannerPulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+    box-shadow: 0 0 20px 0 rgba(0, 191, 255, 0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+    box-shadow: 0 0 40px 12px rgba(0, 191, 255, 0.2);
+  }
 }
 
 .scanNextButton {
