@@ -265,3 +265,132 @@ export async function pausePlayback(player: any, deviceId?: string | null): Prom
     throw new Error(`Pause failed: ${errMsg}`);
   }
 }
+
+/**
+ * Get current player state (position, track, volume, etc.)
+ * Used for virtual pause to store playback position
+ */
+export async function getPlayerState(deviceId: string): Promise<any> {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Not authenticated with Spotify");
+  }
+
+  try {
+    const response = await fetch("https://api.spotify.com/v1/me/player", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get player state: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("Failed to get player state:", errMsg);
+    throw err;
+  }
+}
+
+/**
+ * Set playback volume on a device (0-100%)
+ * Used for virtual pause (mute to 1%) and resume (restore volume)
+ */
+export async function setVolumePercent(deviceId: string, percent: number): Promise<void> {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Not authenticated with Spotify");
+  }
+
+  // Clamp volume to 0-100
+  const volume = Math.max(0, Math.min(100, percent));
+
+  try {
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/player/volume?volume_percent=${volume}&device_id=${deviceId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to set volume: ${response.status}`);
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("Failed to set volume:", errMsg);
+    throw err;
+  }
+}
+
+/**
+ * Seek to a specific position in the current track
+ * Used for virtual resume to restore playback position
+ */
+export async function seekToPosition(deviceId: string, positionMs: number): Promise<void> {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Not authenticated with Spotify");
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/player/seek?position_ms=${positionMs}&device_id=${deviceId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to seek: ${response.status}`);
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("Failed to seek:", errMsg);
+    throw err;
+  }
+}
+
+/**
+ * Set repeat mode for playback
+ * "track" = repeat current track indefinitely (keeps device alive during "pause")
+ * "off" = no repeat
+ */
+export async function setRepeatMode(mode: "track" | "off"): Promise<void> {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Not authenticated with Spotify");
+  }
+
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/me/player/repeat?state=${mode}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to set repeat mode: ${response.status}`);
+    }
+
+    console.log(`🔁 Repeat mode set to: ${mode}`);
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("Failed to set repeat mode:", errMsg);
+    throw err;
+  }
+}

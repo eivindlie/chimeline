@@ -5,6 +5,12 @@ import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
 import { useDeviceKeepAlive } from "../lib/useDeviceKeepAlive";
 import { playTrack, pausePlayback, resumePlayback } from "../lib/spotifyPlayback";
+import {
+  initializePlayback,
+  virtualPause,
+  virtualResume,
+  isVirtuallyPaused,
+} from "../lib/virtualPausePlayback";
 import { scanQRCode, stopScanning } from "../lib/qrScanner";
 import { getToken } from "../lib/spotifyAuth";
 import { getSelectedDeviceId } from "../lib/spotifyDevices";
@@ -67,9 +73,9 @@ export default function ScannerPage() {
     isDesktop() ? token : null
   );
 
-  // Keep mobile device alive with periodic pings (every 8 seconds)
-  // Spotify drops mobile devices from registry after ~10 seconds of inactivity
-  useDeviceKeepAlive(token, selectedDeviceId, !isDesktop());
+  // Device keep-alive disabled: we use virtual pause + repeat mode instead
+  // Playback continues indefinitely with repeat=track, so device never times out
+  // useDeviceKeepAlive(token, selectedDeviceId, false);
 
   // Update playing state from SDK
   useEffect(() => {
@@ -120,6 +126,9 @@ export default function ScannerPage() {
       setIsPlaying(true);
 
       try {
+        // Initialize playback: enable repeat mode so device stays alive
+        await initializePlayback(targetDeviceId);
+
         // Desktop: use SDK player with SDK device ID
         // Mobile: use REST API with stored device ID
         await playTrack(player, cardData.spotifyUri, targetDeviceId);
@@ -150,27 +159,18 @@ export default function ScannerPage() {
       return;
     }
 
-    // On desktop, SDK must be ready; on mobile, REST API works fine
-    if (isDesktop() && !playerReady) {
-      setError("Playback not available");
-      return;
-    }
-
     setError(null);
 
     try {
-      // Desktop: use SDK player; Mobile: use REST API with stored device
-      await pausePlayback(player, targetDeviceId);
+      // Use virtual pause: reduce volume to 1%, store position, never call pause endpoint
+      await virtualPause(targetDeviceId);
       setIsPlaying(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      console.error("Pause failed:", message);
-      
-      // Don't auto-redirect on pause errors - just show error and let user try again
-      // This handles the case where device becomes stale during the pause operation
+      console.error("Virtual pause failed:", message);
       setError(`Pause failed: ${message}`);
     }
-  }, [isDesktop, playerReady, player, deviceId, selectedDeviceId, navigate]);
+  }, [isDesktop, deviceId, selectedDeviceId]);
 
   const handlePlayPause = useCallback(async () => {
     if (!lastScanned) return;
@@ -189,8 +189,13 @@ export default function ScannerPage() {
           throw new Error("Device not ready");
         }
         
-        // Desktop: use SDK player; Mobile: use REST API with stored device
-        await resumePlayback(player, targetDeviceId);
+        // If in virtual pause state, use virtual resume (seek + restore volume)
+        // Otherwise, it's a new track, so use playTrack
+        if (isVirtuallyPaused()) {
+          await virtualResume(targetDeviceId);
+        } else {
+          await playTrack(player, lastScanned.spotifyUri, targetDeviceId);
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Resume failed:", message);
