@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build",
+    "build": "node scripts/update-version.js && react-router build",
     "dev": "react-router dev --host 127.0.0.1",
     "setup:https": "mkdir -p .ssl && openssl req -x509 -newkey rsa:4096 -keyout .ssl/key.pem -out .ssl/cert.pem -days 365 -nodes -subj '/CN=localhost'",
     "start": "react-router-serve ./build/server/index.js",
