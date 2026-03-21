@@ -214,6 +214,29 @@
   transform: translateY(0);
 }
 
+.logoutButton {
+  background-color: var(--error);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  margin-top: var(--spacing-md);
+}
+
+.logoutButton:hover {
+  background-color: #d94848;
+  transform: translateY(-2px);
+}
+
+.logoutButton:active {
+  transform: translateY(0);
+}
+
 /* Mobile responsive */
 @media (max-width: 600px) {
   .container {

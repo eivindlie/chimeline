@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import type { Route } from "./+types/devices";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
-import { fetchAvailableDevices, getSelectedDeviceId } from "../lib/spotifyDevices";
+import { fetchAvailableDevices, getSelectedDeviceId, clearSelectedDeviceId } from "../lib/spotifyDevices";
 import { getToken } from "../lib/spotifyAuth";
 import type { SpotifyDevice } from "../lib/spotifyDevices";
 import styles from "./devices.module.css";
@@ -54,6 +54,20 @@ export default function DevicesPage() {
   if (!isAuthed) {
     return null;
   }
+
+  const handleLogout = () => {
+    // Clear all Spotify auth tokens and device state
+    localStorage.removeItem("spotify_token");
+    localStorage.removeItem("spotify_user");
+    localStorage.removeItem("spotify_pkce_verifier");
+    localStorage.removeItem("spotify_oauth_state");
+    localStorage.removeItem("chimeline_selected_device");
+    localStorage.removeItem("chimeline_virtual_pause");
+    localStorage.removeItem("auth_redirect_to");
+
+    // Redirect to home
+    navigate("/");
+  };
 
   return (
     <div className={styles.container}>
@@ -155,6 +169,9 @@ export default function DevicesPage() {
         <section className={styles.section}>
           <button className={styles.button} onClick={() => navigate("/scanner")}>
             Back to Scanner
+          </button>
+          <button className={styles.logoutButton} onClick={handleLogout}>
+            🚪 Logout & Clear Auth
           </button>
         </section>
       </div>
