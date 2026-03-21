@@ -1,9 +1,7 @@
 import { Link } from "react-router";
-import { useEffect } from "react";
 import type { Route } from "./+types/_index";
 import styles from "./_index.module.css";
 import LogoFull from "../assets/logo-full-dark.svg";
-import { clearSelectedDeviceId } from "../lib/spotifyDevices";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -13,10 +11,6 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  // Clear device ID on home to force fresh setup each session
-  useEffect(() => {
-    clearSelectedDeviceId();
-  }, []);
   return (
     <div className={styles.container}>
       <div className={styles.content}>
