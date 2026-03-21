@@ -1700,3 +1700,96 @@ node scripts/update-version.js
 
 ### 📌 Next Step:
 Test on iPhone to verify fresh code loads without hard refresh when buildHash changes in version.json.
+
+---
+
+## Session 2 – March 21, 2026 (Afternoon/Evening)
+
+**Session Focus**: Platform-aware home page routing, but discovered 3 critical blocking issues.
+
+### ✅ Completed:
+- ✅ **Home Page Platform Detection**: Added `isDesktop()` check to route users intelligently
+  - Desktop: home → /scanner (skip setup, use SDK)
+  - Mobile: home → /setup (first configure REST API device)
+- ✅ **Device Clearing**: Moved to mobile-only (desktop doesn't need saving device ID)
+- ✅ **Generator Link**: Changed from anchor tag to React Router `<Link>` for SPA routing
+- ✅ Issue documented and git commited: `fix: Desktop no longer requires setup (uses SDK device ID)`
+
+### ❌ Critical Blocking Issues (PAUSED HERE):
+
+**1. Can't Access Scanner on Desktop**
+- Status: After home page routing fix, desktop users sent to /scanner
+- Problem: Getting "Device not ready. Try setup again." when trying to play
+- Root Cause: Unknown - needs debugging
+  - Either: SDK initialization failing
+  - Or: deviceId not being set in `useSpotifyPlayer`
+  - Or: Platform detection logic mismatch
+- Expected logs to check:
+  - Browser console for SDK errors
+  - Console logs in scanner.tsx: which device ID is null?
+- Note: This blocks entire desktop gameplay
+
+**2. Update Does Not Work Correctly on Phone**
+- Status: Previous session claimed update detection "fixed", but regressed
+- Problem: Update notification not appearing or not applying correctly
+- Expected: New version detected within 5 minutes → banner appears → click Update → reload
+- Previous "Fix": `cache: "no-store"` + reduced check interval to 5 minutes
+- Likely Root Cause:
+  - version.json still being cached despite no-store headers
+  - Service worker not detecting new buildHash correctly
+  - controllerchange listener missing update event
+- Priority: MEDIUM (less critical than scanner access)
+
+**3. 403 When Setting Volume in Virtual Pause**
+- Status: Attempting to set volume to 1% for fake pause
+- Problem: `PUT /v1/me/player/volume_percent` returns 403 Forbidden
+- Root Cause: Token missing `user-modify-playback-state` scope
+- Solution: User needs to log out (via `/devices` page) and re-authenticate
+- Note: This was documented in prior sessions as known issue
+- Priority: HIGH (blocks pause/resume, which is core gameplay)
+- Workaround: User should click logout on `/devices` page, then re-authenticate
+
+### 📋 Files Modified This Session:
+- `app/routes/_index.tsx` — Platform-aware routing + Link import
+- `app/routes/_index.module.css` — Button styling updates
+- Git: Committed changes
+
+### 🎯 Next Session Action Items:
+
+**HIGHEST PRIORITY**:
+1. Debug desktop scanner access:
+   - Open browser console on desktop
+   - Navigate to /scanner
+   - Try to play a QR code
+   - Copy all console errors/logs
+   - Check if `deviceId` or `selectedDeviceId` is null
+   - Check if SDK initialization is failing
+
+2. Fix volume 403:
+   - Visit `/devices` page
+   - Click logout button
+   - Re-authenticate with all scopes
+   - Try pause/resume again
+
+3. Debug phone update detection:
+   - Check if version.json is actually being fetched fresh
+   - Verify service worker is detecting new buildHash
+   - Check if update banner appears after new deploy
+
+### ⚠️ Architecture Notes:
+
+**Device ID Sources** (needs clarification):
+- Desktop: `deviceId` from `useSpotifyPlayer` hook (SDK ready event)
+- Mobile: `selectedDeviceId` from localStorage (saved during setup)
+- Logic: `targetDeviceId = isDesktop() ? deviceId : selectedDeviceId`
+
+**Why It Might Be Breaking**:
+- Home page clears `selectedDeviceId` but only for mobile
+- Desktop SDK initialization might timeout or fail silently
+- `useSpotifyPlayer` might not be catching all error cases
+- Platform detection (`isDesktop()`) might give unexpected results on certain browsers
+
+### 📌 Code Debt:
+- Console logging could be more granular for debugging
+- Error handling in `useSpotifyPlayer` needs fallback messaging
+- Device ID null-check logic repeated in multiple places

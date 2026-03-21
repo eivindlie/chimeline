@@ -31,8 +31,9 @@
   font-weight: var(--font-weight-semibold);
   background-color: var(--accent-primary);
   color: var(--text-primary);
-  text-decoration: none;
+  border: none;
   border-radius: var(--radius-pill);
+  cursor: pointer;
   transition: var(--transition-normal);
   min-height: 56px;
 }
