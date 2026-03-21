@@ -6,6 +6,24 @@
   color: var(--text-primary);
 }
 
+.container h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+}
+
+.container h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.container p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
 .formSection {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -117,13 +135,13 @@
 
 .trackInfo p {
   margin: var(--spacing-sm) 0;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .trackInfo strong {
   display: inline-block;
   width: 120px;
-  color: var(--text-primary);
+  color: var(--text-secondary);
 }
 
 .trackInfo code {
@@ -196,7 +214,7 @@
   padding: var(--spacing-md) var(--spacing-lg);
   border: none;
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
@@ -229,7 +247,7 @@
   padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--divider);
   font-size: var(--font-size-base);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .trackListItem:last-child {
@@ -237,7 +255,7 @@
 }
 
 .gridInfo {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: var(--spacing-lg);
   font-size: var(--font-size-base);
 }
@@ -271,7 +289,7 @@
 .gridQRLabel {
   text-align: center;
   font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
