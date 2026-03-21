@@ -259,7 +259,7 @@ export async function generateCardsPDFFromTracks(
       });
       pages.push({
         text: pageIndex === pageCount - 1
-          ? 'Duplex printing complete! Cut the same way as the QR codes. Glue back-to-back to create finished cards.'
+          ? 'Duplex printing complete! Simply cut all cards. Each card has QR code on front and song title on back.'
           : 'Duplex printing will continue automatically.',
         fontSize: 8,
         color: '#999',
