@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { exchangeCodeForToken, saveToken, fetchUserProfile, saveUser, getAndClearRedirectPath } from "../lib/spotifyAuth";
+import styles from "./callback.module.css";
 
 export function meta() {
   return [{ title: "ChimeLine - Authenticating..." }];
@@ -10,10 +11,9 @@ export default function CallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    let isMounted = true; // Prevent state updates after unmount
+    let isMounted = true;
 
     const handleCallback = async () => {
       const code = searchParams.get("code");
@@ -61,10 +61,10 @@ export default function CallbackPage() {
         const userProfile = await fetchUserProfile(access_token);
         saveUser(userProfile);
 
-        // Get redirect destination from localStorage (stored during auth initiation)
+        // Get redirect destination
         const redirectTo = getAndClearRedirectPath();
 
-        // Success - redirect to intended page or home
+        // Success - redirect
         if (isMounted) {
           navigate(redirectTo || "/");
         }
@@ -72,7 +72,7 @@ export default function CallbackPage() {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Token exchange failed:", message);
         if (isMounted) {
-          setError(`Authentication failed: ${message}`);
+          setError(`${message}`);
           setTimeout(() => navigate("/"), 2000);
         }
       }
@@ -80,20 +80,23 @@ export default function CallbackPage() {
 
     handleCallback();
 
-    // Cleanup function
     return () => {
       isMounted = false;
     };
   }, [searchParams, navigate]);
 
-  if (error) {
-    return (
-      <div>
-        <p style={{ color: "red" }}>{error}</p>
-        <p>Redirecting...</p>
-      </div>
-    );
-  }
-
-  return <div>Processing authentication...</div>;
+  return (
+    <div className={styles.container}>
+      {error ? (
+        <div className={styles.errorMessage} role="status">
+          {error}
+        </div>
+      ) : (
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p className={styles.loadingText}>Authenticating...</p>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -118,19 +118,13 @@ export default function Setup() {
     <div className={styles.container}>
       {step === "welcome" && (
         <div className={styles.card}>
-          <h1>Let's Set Up Playback</h1>
           <div className={styles.instructions}>
-            <p>To play songs during the game, we need to set up your Spotify device:</p>
-            <ol>
-              <li><strong>Click "Start Playing!"</strong> below</li>
-              <li>Spotify will open with Vangelis' "Chariots of Fire"</li>
-              <li>Let it play so you can confirm your speakers work</li>
-              <li>Return to ChimeLine and we'll automatically set up your device</li>
-            </ol>
-            <p className={styles.note}>💡 This only needs to happen once!</p>
+            <p>Click the button to open Spotify.</p>
+            <p>Return to the app when ready.</p>
+            <p>We'll take care of the rest. ✨</p>
           </div>
           <button onClick={handleStartPlaying} className={styles.button}>
-            Start Playing!
+            Open Spotify
           </button>
         </div>
       )}
@@ -138,26 +132,25 @@ export default function Setup() {
       {step === "processing" && (
         <div className={styles.card}>
           <div className={styles.spinner}></div>
-          <h2>Opening Spotify...</h2>
-          <p>Listen to Chariots of Fire and confirm your speakers work.</p>
+          <p>Setting up...</p>
         </div>
       )}
 
       {step === "success" && (
         <div className={styles.card}>
           <div className={styles.success}>✓</div>
-          <h2>Device Ready!</h2>
-          <p>Redirecting to scanner...</p>
+          <p>Ready to play!</p>
         </div>
       )}
 
       {step === "error" && (
-        <div className={styles.card + " " + styles.error}>
-          <h2>Setup Failed</h2>
-          <p className={styles.errorMessage}>{errorMessage}</p>
-          <button onClick={() => setStep("welcome")} className={styles.button}>
-            Try Again
-          </button>
+        <div className={styles.card}>
+          <div className={styles.errorContent}>
+            <p className={styles.errorMessage}>{errorMessage}</p>
+            <button onClick={() => setStep("welcome")} className={styles.button}>
+              Try Again
+            </button>
+          </div>
         </div>
       )}
     </div>

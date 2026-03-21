@@ -11,6 +11,13 @@ import { fetchTrackMetadata } from "../lib/trackMetadata";
 import type { FullCardData } from "../lib/schemas";
 import styles from "./scanner.module.css";
 
+/**
+ * Minimal scanner UI:
+ * - Initial: Just "Start Scanning" button
+ * - Playing: Circular play/pause button + subtle "Scan next" button
+ * - Mobile-first design (optimized for game-time use)
+ */
+
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "ChimeLine - QR Scanner" },
@@ -52,11 +59,11 @@ export default function ScannerPage() {
     token
   );
 
-  // Update playing state from SDK and display SDK errors
+  // Update playing state from SDK
   useEffect(() => {
     setIsPlaying(sdkIsPlaying);
     if (playerError) {
-      setError(playerError);
+      console.warn("Player error:", playerError);
     }
   }, [sdkIsPlaying, playerError]);
 
@@ -77,22 +84,13 @@ export default function ScannerPage() {
       }
 
       if (!selectedDeviceId) {
-        setError(
-          "No Spotify device selected. Please complete the setup first. Go to the home page and click 'Setup Device'."
-        );
+        setError("No device configured. Go to setup.");
         return;
       }
 
       if (!playerReady || !player) {
-        setError(
-          "Spotify Web Playback SDK not ready. " +
-            "Check browser console for initialization errors. " +
-            "Try refreshing the page."
-        );
-        console.error("Player not initialized", {
-          playerReady,
-          playerExists: !!player,
-        });
+        setError("Playback not ready. Try refreshing.");
+        console.error("Player not initialized", { playerReady, playerExists: !!player });
         return;
       }
 
@@ -105,7 +103,6 @@ export default function ScannerPage() {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Failed to play track:", message);
         
-        // Check if device lost - redirect to setup
         if (message.includes("Setup required")) {
           navigate("/setup");
           return;
@@ -119,7 +116,7 @@ export default function ScannerPage() {
 
   const handlePause = useCallback(async () => {
     if (!playerReady || !player) {
-      setError("Spotify playback not available");
+      setError("Playback not available");
       return;
     }
 
@@ -132,7 +129,6 @@ export default function ScannerPage() {
       const message = err instanceof Error ? err.message : "Unknown error";
       console.error("Pause failed:", message);
       
-      // Check if device lost - redirect to setup
       if (message.includes("Setup required")) {
         navigate("/setup");
         return;
@@ -148,7 +144,6 @@ export default function ScannerPage() {
     if (isPlaying) {
       await handlePause();
     } else {
-      // Resume from pause instead of restarting the track
       try {
         await resumePlayback(player, selectedDeviceId);
         setIsPlaying(true);
@@ -156,16 +151,15 @@ export default function ScannerPage() {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Resume failed:", message);
           
-          // Check if device lost - redirect to setup
-          if (message.includes("Setup required")) {
-            navigate("/setup");
-            return;
-          }
-          
-          setError(`Resume failed: ${message}`);
+        if (message.includes("Setup required")) {
+          navigate("/setup");
+          return;
         }
+        
+        setError(`Resume failed: ${message}`);
       }
-    }, [isPlaying, lastScanned, player, selectedDeviceId, handlePause, navigate]);
+    }
+  }, [isPlaying, lastScanned, player, selectedDeviceId, handlePause, navigate]);
 
   const handleScanNext = useCallback(() => {
     setLastScanned(null);
@@ -174,43 +168,33 @@ export default function ScannerPage() {
     setIsScanning(true);
   }, []);
 
-  // Start scanner when isScanning becomes true and element is mounted
+  // Start scanner when isScanning becomes true
   useEffect(() => {
     if (!isScanning) return;
 
     const startScannerWhenReady = async () => {
-      // Wait for element to be in DOM
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       try {
         setError(null);
         setIsLoadingTrack(false);
 
-        // Step 1: Scan QR and get track ID
         const trackId = await scanQRCode("qr-reader");
         setIsScanning(false);
 
-        // Step 2: Fetch metadata from Spotify
         setIsLoadingTrack(true);
 
         if (!token) {
-          throw new Error("Not authenticated with Spotify");
+          throw new Error("Not authenticated");
         }
 
         const fullData = await fetchTrackMetadata(trackId, token);
         setLastScanned(fullData);
 
-        // Step 3: Attempt to auto-play the track (but don't fail if it errors)
         try {
           await handlePlay(fullData);
         } catch (playbackError) {
-          const playbackMsg =
-            playbackError instanceof Error
-              ? playbackError.message
-              : "Unknown error";
-          console.warn("Playback failed (non-blocking):", playbackMsg);
-          // Don't fail the scan—metadata loaded successfully
-          // User can manually click Play if needed
+          console.warn("Playback failed (non-blocking):", playbackError);
         }
         setIsLoadingTrack(false);
       } catch (err) {
@@ -226,7 +210,6 @@ export default function ScannerPage() {
     startScannerWhenReady();
 
     return () => {
-      // Cleanup: ensure scanner stops if component unmounts
       stopScanning();
     };
   }, [isScanning, handlePlay, token]);
@@ -234,8 +217,7 @@ export default function ScannerPage() {
   if (!isAuthed) {
     return (
       <div className={styles.container}>
-        <h1>QR Scanner</h1>
-        <p>Redirecting to Spotify login...</p>
+        <p>Redirecting to login...</p>
       </div>
     );
   }
@@ -243,69 +225,78 @@ export default function ScannerPage() {
   if (!selectedDeviceId) {
     return (
       <div className={styles.container}>
-        <h1>QR Scanner</h1>
-        <div className={styles.error}>
-          <p>No Spotify device configured</p>
-        </div>
-        <p>Before you can scan QR codes, you need to complete the device setup:</p>
-        <a href="/" className={styles.button}>
-          Go Home & Setup Device
-        </a>
+        <div className={styles.error}>Device not configured</div>
+        <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+          Go to setup first
+        </p>
       </div>
     );
   }
 
   return (
     <div className={styles.container}>
-      <h1>QR Scanner</h1>
-      <p>Scan a QR code to play a song</p>
+      {/* Initial state: Just scan button */}
+      {!lastScanned && !isScanning && (
+        <button
+          onClick={handleStartScanning}
+          className={styles.scanButton}
+        >
+          Start Scanning
+        </button>
+      )}
 
-      <div className={styles.scannerSection}>
-        {!isScanning && (
+      {/* Scanning state: Camera view */}
+      {isScanning && (
+        <>
+          <div id="qr-reader" className={styles.qrReader}></div>
           <button
-            onClick={handleStartScanning}
-            className={styles.button}
+            onClick={handleStopScanning}
+            className={styles.stopButton}
           >
-            Start Scanning
+            Cancel
           </button>
-        )}
+        </>
+      )}
 
-        {isScanning && (
-          <>
-            <div id="qr-reader" className={styles.qrReader}></div>
-            <button
-              onClick={handleStopScanning}
-              className={styles.buttonStop}
-            >
-              Stop Scanning
-            </button>
-          </>
-        )}
-      </div>
-
-      {error && <div className={styles.error}>{error}</div>}
-
+      {/* Loading state */}
       {isLoadingTrack && (
-        <div className={styles.loadingMessage}>
-          <p>🎵 Loading track...</p>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Loading...</p>
         </div>
       )}
 
+      {/* Playing state: Circular play/pause + scan next */}
       {lastScanned && !isLoadingTrack && (
-        <div className={styles.trackInfo}>
-          <h2>✅ Track Loaded</h2>
+        <div className={styles.playingContainer}>
+          <button
+            onClick={handlePlayPause}
+            className={`${styles.playButton} ${isPlaying ? styles.playing : ""}`}
+            title={isPlaying ? "Pause" : "Play"}
+          >
+            {isPlaying ? (
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )}
+          </button>
 
-          <div className={styles.controls}>
-            <button
-              onClick={handlePlayPause}
-              className={styles.button}
-            >
-              {isPlaying ? "⏸ Pause" : "▶ Play"}
-            </button>
-            <button onClick={handleScanNext} className={styles.button}>
-              📱 Scan Next Song
-            </button>
-          </div>
+          <button
+            onClick={handleScanNext}
+            className={styles.scanNextButton}
+          >
+            📱 Scan next
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <div className={styles.error}>
+          {error}
         </div>
       )}
     </div>

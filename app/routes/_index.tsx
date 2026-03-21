@@ -1,5 +1,7 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/_index";
+import styles from "./_index.module.css";
+import LogoFull from "../assets/logo-full-dark.svg";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -10,31 +12,17 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   return (
-    <div style={{ textAlign: "center", padding: "2rem" }}>
-      <h1>ChimeLine</h1>
-      <p>Play songs during a timeline-based card game using QR codes.</p>
-
-      <div style={{ marginTop: "3rem" }}>
-        <Link to="/setup" style={{
-          display: "inline-block",
-          padding: "1.5rem 3rem",
-          fontSize: "1.3rem",
-          fontWeight: "600",
-          backgroundColor: "#1DB954",
-          color: "white",
-          textDecoration: "none",
-          borderRadius: "32px",
-          transition: "all 0.2s ease",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1ed760")}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#1DB954")}
-        >
-          🎵 Start Playing!
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <img src={LogoFull} alt="ChimeLine" className={styles.logo} />
+        
+        <Link to="/setup" className={styles.mainButton}>
+          🎵 Start playing
         </Link>
-      </div>
 
-      <div style={{ marginTop: "2rem", fontSize: "0.9rem", color: "#666" }}>
-        <p>Device setup is quick and happens only once.</p>
+        <Link to="/generator" className={styles.generatorLink}>
+          Generate QR codes
+        </Link>
       </div>
     </div>
   );
