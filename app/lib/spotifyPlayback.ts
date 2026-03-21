@@ -24,14 +24,11 @@ export function clearDeviceOnNotFound() {
 /**
  * Resume playback from where it was paused
  * Just calls play endpoint without URI to resume current track
+ * Works with REST API (compatible with both desktop SDK and mobile)
  */
 export async function resumePlayback(player: any, deviceId: string | null): Promise<void> {
-  if (!player) {
-    throw new Error("Spotify Web Playback SDK not initialized");
-  }
-
   if (!deviceId) {
-    throw new Error("Device ID not available");
+    throw new Error("Device ID not available. Make sure setup is complete.");
   }
 
   const token = getToken();
@@ -66,15 +63,11 @@ export async function resumePlayback(player: any, deviceId: string | null): Prom
 
 /**
  * Start playback of a track on the registered Spotify device
- * Uses REST API with device ID from SDK player
+ * Uses REST API with device ID (works on both desktop SDK and mobile REST API)
  */
 export async function playTrack(player: any, spotifyUri: string, deviceId: string | null): Promise<void> {
-  if (!player) {
-    throw new Error("Spotify Web Playback SDK not initialized. SDK initialization may have failed - check browser console.");
-  }
-
   if (!deviceId) {
-    throw new Error("Device ID not available. Spotify player may not be ready.");
+    throw new Error("Device ID not available. Make sure setup is complete.");
   }
 
   const token = getToken();
@@ -146,12 +139,9 @@ export async function pausePlaybackOnDevice(deviceId: string): Promise<void> {
 /**
  * Pause playback via REST API
  * Optionally targets a specific device via deviceId
+ * Works with REST API (compatible with both desktop SDK and mobile)
  */
 export async function pausePlayback(player: any, deviceId?: string | null): Promise<void> {
-  if (!player) {
-    throw new Error("Spotify Web Playback SDK not initialized");
-  }
-
   const token = getToken();
   if (!token) {
     throw new Error("Not authenticated with Spotify");

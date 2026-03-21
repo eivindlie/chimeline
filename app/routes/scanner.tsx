@@ -100,10 +100,9 @@ export default function ScannerPage() {
         return;
       }
 
-      // On desktop, SDK must be ready
-      if (isDesktop() && (!playerReady || !player)) {
+      // On desktop, SDK must be ready; on mobile, REST API works fine
+      if (isDesktop() && !playerReady) {
         setError("Playback not ready. Try refreshing.");
-        console.error("Player not initialized", { playerReady, playerExists: !!player });
         return;
       }
 
@@ -143,8 +142,8 @@ export default function ScannerPage() {
       return;
     }
 
-    // On desktop, SDK must be ready
-    if (isDesktop() && (!playerReady || !player)) {
+    // On desktop, SDK must be ready; on mobile, REST API works fine
+    if (isDesktop() && !playerReady) {
       setError("Playback not available");
       return;
     }
