@@ -38,11 +38,13 @@
 }
 
 .formSection {
+  width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-2xl);
+  box-sizing: border-box;
 }
 
 .inputGroup {
@@ -124,10 +126,12 @@
 }
 
 .resultsSection {
+  width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   background: var(--surface);
+  box-sizing: border-box;
 }
 
 .resultsSection h2 {
@@ -216,10 +220,12 @@
 
 /* Mode selector tabs */
 .modeSelector {
+  width: 100%;
   display: flex;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-2xl);
   border-bottom: 2px solid var(--divider);
+  box-sizing: border-box;
 }
 
 .modeButton {
