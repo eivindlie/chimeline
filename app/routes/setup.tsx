@@ -18,11 +18,32 @@ export default function Setup() {
     return `https://open.spotify.com/track/${SETUP_TRACK_ID}`;
   };
 
+  const isDesktop = () => {
+    // Check if device has touch capability (mobile) or not (desktop)
+    return !('ontouchstart' in window) && !navigator.maxTouchPoints;
+  };
+
   const handleStartPlaying = () => {
     setStep("processing");
-    // Navigate to Spotify URL - deep link will open Spotify app
-    // visibilitychange event will detect when user returns
-    window.location.href = getSpotifyRedirectUrl();
+    
+    if (isDesktop()) {
+      // Desktop: Open in new tab so visibilitychange event still fires
+      window.open(getSpotifyRedirectUrl(), '_blank');
+      
+      // Listen for visibility change (user returning from Spotify tab)
+      const handleVisibilityChange = async () => {
+        if (document.visibilityState === "visible") {
+          // Remove listener to prevent duplicate runs
+          document.removeEventListener("visibilitychange", handleVisibilityChange);
+          await handleReturnedFromApp();
+        }
+      };
+      
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    } else {
+      // Mobile: Navigate in same tab (deep linking to Spotify app)
+      window.location.href = getSpotifyRedirectUrl();
+    }
   };
 
   const handleReturnedFromApp = async () => {
@@ -87,16 +108,18 @@ export default function Setup() {
       return;
     }
 
-    // Listen for visibility change (user returning from Spotify)
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible") {
-        // Remove listener to prevent duplicate runs
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-        await handleReturnedFromApp();
-      }
-    };
+    // Only set up listener for mobile on processing step
+    // Desktop already sets up listener in handleStartPlaying
+    if (step === "processing" && isAuthed && !isDesktop()) {
+      // Listen for visibility change (user returning from Spotify)
+      const handleVisibilityChange = async () => {
+        if (document.visibilityState === "visible") {
+          // Remove listener to prevent duplicate runs
+          document.removeEventListener("visibilitychange", handleVisibilityChange);
+          await handleReturnedFromApp();
+        }
+      };
 
-    if (step === "processing" && isAuthed) {
       document.addEventListener("visibilitychange", handleVisibilityChange);
       return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
     }
