@@ -97,7 +97,11 @@ export default function ScannerPage() {
 
       if (!targetDeviceId) {
         setError("Device not ready. Try setup again.");
+        console.warn("Playback failed: no device ID. Desktop:", isDesktop(), "deviceId:", deviceId, "selectedDeviceId:", selectedDeviceId);
+        // Don't auto-redirect - let user tap "Scan Next" or go to setup manually
+        // navigate("/setup");
         return;
+      }
       }
 
       // On desktop, SDK must be ready; on mobile, REST API works fine
@@ -158,11 +162,8 @@ export default function ScannerPage() {
       const message = err instanceof Error ? err.message : "Unknown error";
       console.error("Pause failed:", message);
       
-      if (message.includes("Setup required")) {
-        navigate("/setup");
-        return;
-      }
-      
+      // Don't auto-redirect on pause errors - just show error and let user try again
+      // This handles the case where device becomes stale during the pause operation
       setError(`Pause failed: ${message}`);
     }
   }, [isDesktop, playerReady, player, deviceId, selectedDeviceId, navigate]);
@@ -204,8 +205,12 @@ export default function ScannerPage() {
   }, [isPlaying, lastScanned, isDesktop, player, deviceId, selectedDeviceId, handlePause, navigate]);
 
   const handleScanNext = useCallback(async () => {
-    // Pause current playback
-    await handlePause();
+    // Try to pause current playback (non-blocking - continue even if it fails)
+    try {
+      await handlePause();
+    } catch (pauseErr) {
+      console.warn("Pause during scan-next failed (continuing):", pauseErr);
+    }
     
     // Reset state and start scanning again
     setLastScanned(null);
