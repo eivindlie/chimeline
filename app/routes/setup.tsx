@@ -120,8 +120,8 @@ export default function Setup() {
         <div className={styles.card}>
           <div className={styles.instructions}>
             <p>Click the button to open Spotify.</p>
-            <p>Return to the app when ready.</p>
-            <p>We'll take care of the rest. ✨</p>
+            <p>Listen for an iconic theme—verify you hear sound.</p>
+            <p>Return to the app when ready. ✨</p>
           </div>
           <button onClick={handleStartPlaying} className={styles.button}>
             Open Spotify
