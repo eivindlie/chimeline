@@ -4,7 +4,7 @@ import { getToken } from "~/lib/spotifyAuth";
 import { useAuthRedirect } from "~/lib/useAuthRedirect";
 import { useSpotifyPlayer } from "~/lib/useSpotifyPlayer";
 import { playTrack, pausePlayback } from "~/lib/spotifyPlayback";
-import { saveSelectedDeviceId, SETUP_TRACK_ID, buildSpotifyTrackUri, fetchAvailableDevices, clearSelectedDeviceId } from "~/lib/spotifyDevices";
+import { saveSelectedDeviceId, SETUP_TRACK_ID, buildSpotifyTrackUri, fetchAvailableDevices } from "~/lib/spotifyDevices";
 import styles from "./setup.module.css";
 
 export default function Setup() {
@@ -12,11 +12,6 @@ export default function Setup() {
   const [step, setStep] = useState<"welcome" | "playing" | "success" | "error">("welcome");
   const [errorMessage, setErrorMessage] = useState("");
   const [token, setToken] = useState<string | null>(null);
-  
-  // Clear device ID on setup mount - fresh setup each time
-  useEffect(() => {
-    clearSelectedDeviceId();
-  }, []);
   
   // Check auth and redirect to login if needed
   const isAuthed = useAuthRedirect("/setup");
