@@ -2,11 +2,10 @@ import { useEffect, useState } from "react";
 
 /**
  * Register service worker and detect updates
- * When a new version is available, notify the user
+ * Checks version.json for buildHash changes (not just SW file changes)
  */
 export function useServiceWorkerUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [newWorker, setNewWorker] = useState<ServiceWorker | null>(null);
 
   useEffect(() => {
     // Skip service worker in development mode (allows fresh code on every refresh)
@@ -23,6 +22,7 @@ export function useServiceWorkerUpdate() {
 
     let registration: ServiceWorkerRegistration | null = null;
     let checkInterval: NodeJS.Timeout | null = null;
+    let currentBuildHash: string | null = null;
 
     const registerSW = async () => {
       try {
@@ -31,33 +31,39 @@ export function useServiceWorkerUpdate() {
         });
         console.log("Service Worker registered");
 
-        // Check for updates immediately and periodically (every 1 hour)
+        // Get initial build hash
+        const getInitialHash = async () => {
+          try {
+            const response = await fetch("/version.json?t=" + Date.now());
+            const data = await response.json();
+            currentBuildHash = data.buildHash;
+            console.log("Current build hash:", currentBuildHash);
+          } catch (err) {
+            console.warn("Failed to get initial build hash:", err);
+          }
+        };
+
+        await getInitialHash();
+
+        // Check for updates by comparing buildHash in version.json
         const checkForUpdates = async () => {
           try {
-            await registration?.update();
-            console.log("Checked for Service Worker updates");
+            const response = await fetch("/version.json?t=" + Date.now());
+            const data = await response.json();
+            const newBuildHash = data.buildHash;
+
+            if (newBuildHash && newBuildHash !== currentBuildHash) {
+              console.log("New version available! Hash changed:", currentBuildHash, "→", newBuildHash);
+              setUpdateAvailable(true);
+            }
           } catch (err) {
-            console.warn("Failed to check for updates:", err);
+            console.warn("Failed to check for version updates:", err);
           }
         };
 
         checkForUpdates();
-        checkInterval = setInterval(checkForUpdates, 60 * 60 * 1000);
-
-        // Listen for new worker ready
-        registration.addEventListener("updatefound", () => {
-          const newWorkerRef = registration!.installing;
-          if (!newWorkerRef) return;
-
-          newWorkerRef.addEventListener("statechange", () => {
-            if (newWorkerRef.state === "installed" && navigator.serviceWorker.controller) {
-              // New version available
-              console.log("New version available - prompting user");
-              setUpdateAvailable(true);
-              setNewWorker(newWorkerRef);
-            }
-          });
-        });
+        // Check every 10 minutes for faster update detection
+        checkInterval = setInterval(checkForUpdates, 10 * 60 * 1000);
       } catch (err) {
         console.error("Service Worker registration failed:", err);
       }
@@ -73,13 +79,8 @@ export function useServiceWorkerUpdate() {
   }, []);
 
   const handleUpdate = () => {
-    if (newWorker) {
-      // Tell service worker to skip waiting
-      newWorker.postMessage({ type: "SKIP_WAITING" });
-
-      // Reload page to activate new version
-      window.location.reload();
-    }
+    // Full page reload to get fresh service worker
+    window.location.reload();
   };
 
   return { updateAvailable, handleUpdate };
