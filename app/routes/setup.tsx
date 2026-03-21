@@ -105,11 +105,12 @@ export default function Setup() {
             return;
           }
           
-          // Save the first active device (or primary)
-          const deviceToUse = devices[0];
-          saveSelectedDeviceId(deviceToUse.id);
+          // Find the currently active device (is_active: true)
+          // Fallback to first device if none are active
+          const activeDevice = devices.find((d) => d.is_active) || devices[0];
+          saveSelectedDeviceId(activeDevice.id);
           
-          console.log("Mobile setup complete. Device saved:", deviceToUse.id);
+          console.log("Mobile setup complete. Device saved:", activeDevice.name, `(${activeDevice.id})`);
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Failed to fetch devices";
           console.error("Mobile setup device fetch failed:", msg);
