@@ -34,10 +34,14 @@ export function useServiceWorkerUpdate() {
         // Get initial build hash
         const getInitialHash = async () => {
           try {
-            const response = await fetch("/version.json?t=" + Date.now());
+            // Use fetch with aggressive cache busting for mobile compatibility
+            const response = await fetch("/version.json", {
+              cache: "no-store", // Never use cached version.json
+              headers: { "Pragma": "no-cache", "Cache-Control": "no-cache" },
+            });
             const data = await response.json();
             currentBuildHash = data.buildHash;
-            console.log("Current build hash:", currentBuildHash);
+            console.log("✓ Initial build hash loaded:", currentBuildHash);
           } catch (err) {
             console.warn("Failed to get initial build hash:", err);
           }
@@ -48,12 +52,16 @@ export function useServiceWorkerUpdate() {
         // Check for updates by comparing buildHash in version.json
         const checkForUpdates = async () => {
           try {
-            const response = await fetch("/version.json?t=" + Date.now());
+            const response = await fetch("/version.json", {
+              cache: "no-store", // Force fresh fetch every time
+              headers: { "Pragma": "no-cache", "Cache-Control": "no-cache" },
+            });
             const data = await response.json();
             const newBuildHash = data.buildHash;
 
             if (newBuildHash && newBuildHash !== currentBuildHash) {
-              console.log("New version available! Hash changed:", currentBuildHash, "→", newBuildHash);
+              console.log("🆕 New version available! Hash changed:", currentBuildHash, "→", newBuildHash);
+              currentBuildHash = newBuildHash; // Update for next comparison
               setUpdateAvailable(true);
             }
           } catch (err) {
@@ -61,18 +69,20 @@ export function useServiceWorkerUpdate() {
           }
         };
 
-        checkForUpdates();
-        // Check every 10 minutes for faster update detection
-        checkInterval = setInterval(checkForUpdates, 10 * 60 * 1000);
+        // Check immediately on page load
+        await checkForUpdates();
+
+        // Check every 5 minutes (faster detection on mobile)
+        checkInterval = setInterval(checkForUpdates, 5 * 60 * 1000);
 
         // Listen for new SW installations (backup detection method)
         registration.addEventListener("updatefound", () => {
           const newWorker = registration!.installing;
-          console.log("New service worker installing...");
+          console.log("📦 New service worker installing...");
           if (newWorker) {
             newWorker.addEventListener("statechange", () => {
               if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                console.log("New service worker ready (updatefound)");
+                console.log("🆕 New service worker ready (updatefound)");
                 setUpdateAvailable(true);
               }
             });
@@ -93,27 +103,47 @@ export function useServiceWorkerUpdate() {
   }, []);
 
   const handleUpdate = () => {
+    console.log("Update button clicked - handling update");
+
     if (!navigator.serviceWorker.controller) {
       // No active SW, just reload
+      console.log("No active SW controller, reloading immediately");
       window.location.reload();
       return;
     }
 
-    // Tell the new SW to skip waiting and take over
-    const allSWs = navigator.serviceWorker.controller;
-    if (allSWs) {
-      allSWs.postMessage({ type: "SKIP_WAITING" });
-    }
-
-    // Listen for the new SW to take control
+    // Set up listener BEFORE sending SKIP_WAITING to catch the event
     let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
+    const handleControllerChange = () => {
       if (!refreshing) {
         refreshing = true;
-        console.log("New service worker activated - reloading page");
+        console.log("✓ New service worker activated - reloading page");
         window.location.reload();
       }
-    });
+    };
+
+    navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+
+    // Fallback: if controllerchange doesn't fire in 3 seconds, reload anyway
+    const timeoutId = setTimeout(() => {
+      if (!refreshing) {
+        console.warn("controllerchange didn't fire within 3s, reloading as fallback");
+        refreshing = true;
+        window.location.reload();
+      }
+    }, 3000);
+
+    // Tell the waiting SW to skip waiting and take control immediately
+    // Post to all SWs (should be only one)
+    const allControllers = navigator.serviceWorker;
+    if (allControllers.controller) {
+      console.log("Sending SKIP_WAITING to service worker");
+      allControllers.controller.postMessage({ type: "SKIP_WAITING" });
+    } else {
+      console.warn("No controller available for SKIP_WAITING");
+      clearTimeout(timeoutId);
+      window.location.reload();
+    }
   };
 
   return { updateAvailable, handleUpdate };

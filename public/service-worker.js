@@ -48,9 +48,24 @@ self.addEventListener("activate", (event) => {
 });
 
 // Fetch event - network first, fallback to cache
+// Special handling for version.json: never cache it (always fetch fresh)
 self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (event.request.method !== "GET") {
+    return;
+  }
+
+  // version.json must ALWAYS be fresh - never cache it
+  if (event.request.url.includes("/version.json")) {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          // If offline, return empty object (update check will fail gracefully)
+          return new Response(JSON.stringify({ buildHash: "offline" }), {
+            headers: { "Content-Type": "application/json" },
+          });
+        })
+    );
     return;
   }
 
