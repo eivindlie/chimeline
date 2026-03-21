@@ -1,21 +1,14 @@
 .container {
+  width: min(960px, 100%);
   margin: 0 auto;
   padding: var(--spacing-lg);
   background-color: var(--bg-primary);
   color: var(--text-primary);
 }
 
-@media (min-width: 768px) {
-  .container {
-    padding: var(--spacing-xl);
-    max-width: 1200px;
-  }
-}
-
 @media (min-width: 1024px) {
   .container {
-    padding: var(--spacing-2xl);
-    max-width: 1400px;
+    padding: var(--spacing-xl);
   }
 }
 
