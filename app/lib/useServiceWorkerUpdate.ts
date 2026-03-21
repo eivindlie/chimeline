@@ -64,6 +64,20 @@ export function useServiceWorkerUpdate() {
         checkForUpdates();
         // Check every 10 minutes for faster update detection
         checkInterval = setInterval(checkForUpdates, 10 * 60 * 1000);
+
+        // Listen for new SW installations (backup detection method)
+        registration.addEventListener("updatefound", () => {
+          const newWorker = registration!.installing;
+          console.log("New service worker installing...");
+          if (newWorker) {
+            newWorker.addEventListener("statechange", () => {
+              if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                console.log("New service worker ready (updatefound)");
+                setUpdateAvailable(true);
+              }
+            });
+          }
+        });
       } catch (err) {
         console.error("Service Worker registration failed:", err);
       }
@@ -79,8 +93,27 @@ export function useServiceWorkerUpdate() {
   }, []);
 
   const handleUpdate = () => {
-    // Full page reload to get fresh service worker
-    window.location.reload();
+    if (!navigator.serviceWorker.controller) {
+      // No active SW, just reload
+      window.location.reload();
+      return;
+    }
+
+    // Tell the new SW to skip waiting and take over
+    const allSWs = navigator.serviceWorker.controller;
+    if (allSWs) {
+      allSWs.postMessage({ type: "SKIP_WAITING" });
+    }
+
+    // Listen for the new SW to take control
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!refreshing) {
+        refreshing = true;
+        console.log("New service worker activated - reloading page");
+        window.location.reload();
+      }
+    });
   };
 
   return { updateAvailable, handleUpdate };
