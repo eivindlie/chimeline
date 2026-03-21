@@ -4,7 +4,7 @@ import { getToken } from "~/lib/spotifyAuth";
 import { useAuthRedirect } from "~/lib/useAuthRedirect";
 import { useSpotifyPlayer } from "~/lib/useSpotifyPlayer";
 import { playTrack, pausePlayback } from "~/lib/spotifyPlayback";
-import { saveSelectedDeviceId, getSelectedDeviceId, SETUP_TRACK_ID, buildSpotifyTrackUri } from "~/lib/spotifyDevices";
+import { saveSelectedDeviceId, getSelectedDeviceId, SETUP_TRACK_ID, buildSpotifyTrackUri, fetchAvailableDevices } from "~/lib/spotifyDevices";
 import styles from "./setup.module.css";
 
 export default function Setup() {
@@ -94,7 +94,36 @@ export default function Setup() {
       if (document.visibilityState === "visible") {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
         
-        // After returning from Spotify, go to scanner
+        // After returning from Spotify, fetch available devices and save one
+        try {
+          const t = token || getToken();
+          if (!t) {
+            throw new Error("Not authenticated");
+          }
+          
+          // Fetch available devices from Spotify
+          const devices = await fetchAvailableDevices(t);
+          
+          if (devices.length === 0) {
+            setErrorMessage("No active Spotify devices found. Please ensure Spotify is running.");
+            setStep("error");
+            return;
+          }
+          
+          // Save the first active device (or primary)
+          const deviceToUse = devices[0];
+          saveSelectedDeviceId(deviceToUse.id);
+          
+          console.log("Mobile setup complete. Device saved:", deviceToUse.id);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Failed to fetch devices";
+          console.error("Mobile setup device fetch failed:", msg);
+          setErrorMessage(msg);
+          setStep("error");
+          return;
+        }
+        
+        // Go to scanner
         await new Promise(resolve => setTimeout(resolve, 500));
         setStep("success");
         setTimeout(() => {
