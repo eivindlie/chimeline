@@ -9,6 +9,12 @@ export function useServiceWorkerUpdate() {
   const [newWorker, setNewWorker] = useState<ServiceWorker | null>(null);
 
   useEffect(() => {
+    // Skip service worker in development mode (allows fresh code on every refresh)
+    if (import.meta.env.DEV) {
+      console.log("Service Worker disabled in development mode");
+      return;
+    }
+
     // Only register service worker if supported
     if (!("serviceWorker" in navigator)) {
       console.log("Service Worker not supported");
