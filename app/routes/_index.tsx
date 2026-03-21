@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { useEffect } from "react";
 import type { Route } from "./+types/_index";
 import styles from "./_index.module.css";
@@ -13,18 +13,38 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  // Clear device ID on home load - ensures fresh setup each session
+  const navigate = useNavigate();
+
+  const isDesktop = () => {
+    return !('ontouchstart' in window) && !navigator.maxTouchPoints;
+  };
+
+  // Mobile: clear device ID on home load (ensures fresh setup each session)
+  // Desktop: don't clear (SDK handles device automatically)
   useEffect(() => {
-    clearSelectedDeviceId();
+    if (!isDesktop()) {
+      clearSelectedDeviceId();
+    }
   }, []);
+
+  const handleStartPlaying = () => {
+    // Desktop: go directly to scanner (SDK auto-manages device)
+    // Mobile: go to setup to configure device for REST API
+    if (isDesktop()) {
+      navigate("/scanner");
+    } else {
+      navigate("/setup");
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.content}>
         <img src={LogoFull} alt="ChimeLine" className={styles.logo} />
         
-        <Link to="/setup" className={styles.mainButton}>
+        <button onClick={handleStartPlaying} className={styles.mainButton}>
           🎵 Start playing
-        </Link>
+        </button>
 
         <Link to="/generator" className={styles.generatorLink}>
           Generate QR codes
