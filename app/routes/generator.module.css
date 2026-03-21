@@ -1,9 +1,22 @@
 .container {
-  max-width: 900px;
   margin: 0 auto;
-  padding: var(--spacing-2xl);
+  padding: var(--spacing-lg);
   background-color: var(--bg-primary);
   color: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: var(--spacing-xl);
+    max-width: 1200px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: var(--spacing-2xl);
+    max-width: 1400px;
+  }
 }
 
 .container h1 {
@@ -263,9 +276,22 @@
 /* QR Grid for playlist */
 .qrGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: var(--spacing-xl);
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--spacing-lg);
   margin: var(--spacing-xl) 0;
+}
+
+@media (min-width: 768px) {
+  .qrGrid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--spacing-xl);
+  }
+}
+
+@media (min-width: 1024px) {
+  .qrGrid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
 }
 
 .qrGridItem {
