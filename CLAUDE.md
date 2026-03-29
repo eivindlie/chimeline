@@ -127,7 +127,7 @@ The game is distributed in **ziplock bags** (10×15cm bags fit both the 65×65mm
 
 ## Known Limitations
 
-- **Web Playback SDK 5-user limit**: Spotify development accounts are capped at 5 users. Fine for current use; production scale needs Spotify approval.
+- **Spotify development mode user cap**: Users must be manually added in the Spotify Developer Dashboard. Extended quota requires an organization with 250k+ MAUs (as of May 2025) — not achievable for a personal project. ChimeLine is effectively limited to a manually-curated list of friends/family.
 - **Mobile requires Spotify app**: REST API playback only — no in-browser audio on mobile.
 - **No auth guards**: All routes are publicly accessible by URL. Fine for now.
 - **Token expiry**: Handled via silent refresh using `refresh_token` (stored in `localStorage`). Falls back to login if refresh fails.
