@@ -221,6 +221,20 @@
 }
 
 /* ============================================
+   FUN FACT
+   ============================================ */
+
+.funFact {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.5;
+  font-style: italic;
+  margin: 0;
+}
+
+/* ============================================
    ERROR STATE
    ============================================ */
 

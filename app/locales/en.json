@@ -56,5 +56,17 @@
   },
   "callback": {
     "authenticating": "Authenticating..."
+  },
+  "funFacts": {
+    "1": "When you press pause, you're actually playing John Cage's 4'33'' — a piece of music consisting entirely of silence.",
+    "2": "QR codes can store up to 3KB of data. ChimeLine uses about 40 bytes.",
+    "3": "The oldest song with a known composer is a Sumerian hymn from around 1400 BC.",
+    "4": "Vinyl records spin at 33⅓ RPM — a speed chosen in 1948 to fit a full symphony on one side.",
+    "5": "The first music video ever broadcast on MTV was 'Video Killed the Radio Star' by The Buggles, on August 1, 1981.",
+    "6": "A standard CD holds 74 minutes of audio — chosen specifically to fit Beethoven's 9th Symphony.",
+    "7": "Vangelis composed the Chariots of Fire soundtrack on a synthesizer — in 1981, that was controversial. The Academy gave him the Oscar for Best Original Score anyway.",
+    "8": "The Chariots of Fire theme was composed overnight by Vangelis, reportedly in a single take.",
+    "9": "Vangelis's full name was Evangelos Odysseas Papathanassiou — 'Vangelis' is just easier to fit on a poster.",
+    "10": "The Chariots of Fire film is set during the 1924 Paris Olympics, but the iconic beach running scene was filmed in St Andrews, Scotland."
   }
 }

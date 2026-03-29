@@ -36,9 +36,17 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
+const FUN_FACTS_COUNT = 10;
+
+function pickRandomFactIndex(exclude?: number): number {
+  const candidates = Array.from({ length: FUN_FACTS_COUNT }, (_, i) => i + 1).filter(i => i !== exclude);
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
 export default function ScannerPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [factIndex, setFactIndex] = useState(() => pickRandomFactIndex());
   const [isScanning, setIsScanning] = useState(false);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -231,6 +239,9 @@ export default function ScannerPage() {
       console.warn("Pause during scan-next failed (continuing):", pauseErr);
     }
     
+    // Pick a new fact for when the initial state re-appears
+    setFactIndex(prev => pickRandomFactIndex(prev));
+
     // Reset state and start scanning again
     setLastScanned(null);
     setIsLoadingTrack(false);
@@ -326,6 +337,11 @@ export default function ScannerPage() {
             {t('scanner.startScanning')}
           </button>
         )
+      )}
+
+      {/* Fun fact — shown in initial state only */}
+      {!lastScanned && !isScanning && !isLoadingTrack && (
+        <p className={styles.funFact}>{t(`funFacts.${factIndex}` as any)}</p>
       )}
 
       {/* Scanning state: Camera view */}
