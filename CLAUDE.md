@@ -126,8 +126,9 @@ Build hash baked into bundle via `vite.config.ts` `define: { __BUILD_HASH__ }` (
    - "Vinyl records spin at 33⅓ RPM — a speed chosen in 1948 to fit a full symphony on one side."
    - "The first music video ever broadcast on MTV was 'Video Killed the Radio Star' by The Buggles, on August 1, 1981."
    - "A standard CD holds 74 minutes of audio — chosen specifically to fit Beethoven's 9th Symphony."
-2. **i18n** — Norwegian (`nb`) as primary language; `nb-NO` date formatting already in use
-3. **Printable instruction sheet** — PDF export from generator explaining how to play (scan → listen → place card on timeline), with series mark legend
+2. **Add to Home Screen prompt** — popup suggesting users install the PWA on compatible devices (iOS Safari, Android Chrome); use `beforeinstallprompt` on Android, show manual instructions on iOS
+3. **i18n** — Norwegian (`nb`) as primary language; `nb-NO` date formatting already in use
+4. **Printable instruction sheet** — PDF export from generator explaining how to play (scan → listen → place card on timeline), with series mark legend
 
 ---
 
