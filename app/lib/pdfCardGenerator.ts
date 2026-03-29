@@ -204,7 +204,7 @@ export async function generateCardsPDFFromTracks(
             ],
             verticalAlignment: 'middle',
             border: [1, 1, 1, 1],
-            borderColor: '#e0e0e0',
+            borderColor: '#ffffff',
             margin: [5, 5, 5, 5],
           };
         });
@@ -214,7 +214,7 @@ export async function generateCardsPDFFromTracks(
           cells.push({
             text: '',
             border: [1, 1, 1, 1] as [number, number, number, number],
-            borderColor: '#e0e0e0',
+            borderColor: '#ffffff',
           });
         }
 
@@ -287,8 +287,8 @@ export async function generateCardsPDFFromTracks(
         layout: {
           hLineWidth: () => 0.5,
           vLineWidth: () => 0.5,
-          hLineColor: () => '#d0d0d0',
-          vLineColor: () => '#d0d0d0',
+          hLineColor: () => '#ffffff',
+          vLineColor: () => '#ffffff',
         },
       });
       if (pageIndex < pageCount - 1) {
