@@ -10,6 +10,7 @@ import {
   virtualPause,
   virtualResume,
   isVirtuallyPaused,
+  restoreVolume,
 } from "../lib/virtualPausePlayback";
 import { scanQRCode, stopScanning } from "../lib/qrScanner";
 import { getToken } from "../lib/spotifyAuth";
@@ -130,9 +131,11 @@ export default function ScannerPage() {
         // Initialize playback: enable repeat mode so device stays alive
         await initializePlayback(targetDeviceId);
 
-        // Desktop: use SDK player with SDK device ID
-        // Mobile: use REST API with stored device ID
+        // Start the new track first (still at 0% if virtually paused),
+        // then restore volume — most tracks open with silence so the
+        // fade-in is imperceptible
         await playTrack(player, cardData.spotifyUri, targetDeviceId);
+        await restoreVolume(targetDeviceId);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Failed to play track:", message);

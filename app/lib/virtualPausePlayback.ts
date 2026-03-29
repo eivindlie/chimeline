@@ -27,14 +27,15 @@ import type {
 import {
   saveVirtualPauseState,
   getVirtualPauseState,
+  clearVirtualPauseState,
 } from "./virtualPause";
 
-const VIRTUAL_PAUSE_VOLUME = 1; // 1% is barely audible, won't trigger iOS sleep
+const VIRTUAL_PAUSE_VOLUME = 0; // 0% = silent; playback continues so device stays alive
 
 /**
  * Initialize playback with repeat mode and volume
  */
-export async function initializePlayback(deviceId: string): Promise<void> {
+export async function initializePlayback(_deviceId: string): Promise<void> {
   try {
     // Enable repeat track mode so it loops indefinitely
     // This prevents device from going inactive when track ends
@@ -124,4 +125,16 @@ export async function virtualResume(deviceId: string): Promise<void> {
  */
 export function isVirtuallyPaused(): boolean {
   return getVirtualPauseState().isPaused;
+}
+
+/**
+ * Restore volume to its pre-pause level and clear virtual pause state.
+ * Call this before starting a new track so it doesn't play at muted volume.
+ */
+export async function restoreVolume(deviceId: string): Promise<void> {
+  const state = getVirtualPauseState();
+  if (!state.isPaused) return;
+
+  await setVolumePercent(deviceId, state.previousVolume);
+  clearVirtualPauseState();
 }
