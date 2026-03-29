@@ -136,18 +136,7 @@ The game is distributed in **ziplock bags** (10×15cm bags fit both the 65×65mm
 
 ## Next Priorities
 
-1. **Fun fact blurbs** — surface easter-egg facts in the UI. Candidate facts:
-   - "When you press pause, you're actually playing John Cage's *4'33''* — a piece of music consisting entirely of silence."
-   - "QR codes can store up to 3KB of data. ChimeLine uses about 40 bytes."
-   - "The oldest song with a known composer is a Sumerian hymn from around 1400 BC."
-   - "Vinyl records spin at 33⅓ RPM — a speed chosen in 1948 to fit a full symphony on one side."
-   - "The first music video ever broadcast on MTV was 'Video Killed the Radio Star' by The Buggles, on August 1, 1981."
-   - "A standard CD holds 74 minutes of audio — chosen specifically to fit Beethoven's 9th Symphony."
-   - "Vangelis composed the *Chariots of Fire* soundtrack on a synthesizer — in 1981, that was controversial. The Academy gave him the Oscar for Best Original Score anyway."
-   - "The *Chariots of Fire* title theme was composed overnight by Vangelis, reportedly in a single take."
-   - "Vangelis's full name was Evangelos Odysseas Papathanassiou — 'Vangelis' is just easier to fit on a poster."
-   - "The *Chariots of Fire* film is set during the 1924 Paris Olympics, but the iconic beach running scene was filmed in St Andrews, Scotland."
-2. **Add to Home Screen prompt** — popup suggesting users install the PWA on compatible devices (iOS Safari, Android Chrome); use `beforeinstallprompt` on Android, show manual instructions on iOS
+No outstanding priorities. Suggest new features or improvements!
 
 ---
 
