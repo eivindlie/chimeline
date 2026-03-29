@@ -119,11 +119,11 @@ Build hash baked into bundle via `vite.config.ts` `define: { __BUILD_HASH__ }` (
 
 ## Next Priorities
 
-1. **Test 4'33'' virtual pause on mobile** — verify device stays alive after several minutes of pause
-2. **Test update detection on iPhone** — `__BUILD_HASH__` fix not yet verified on device
-3. **Auth guards** on `/scanner` and `/generator` routes
-4. **Token refresh** — handle expired tokens gracefully instead of breaking silently
-5. **Fun fact blurbs** — surface easter-egg facts in the UI (e.g. "When you press pause, you're playing John Cage's 4'33''")
+1. **Auth guards** on `/scanner` and `/generator` routes
+2. **Token refresh** — handle expired tokens gracefully instead of breaking silently
+3. **Fun fact blurbs** — surface easter-egg facts in the UI (e.g. "When you press pause, you're playing John Cage's 4'33''")
+4. **i18n** — Norwegian (`nb`) as primary language; `nb-NO` date formatting already in use
+5. **Printable instruction sheet** — PDF export from generator explaining how to play (scan → listen → place card on timeline), with series mark legend
 
 ---
 
