@@ -28,6 +28,7 @@ export default function GeneratorPage() {
   // Playlist state
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [playlistTracks, setPlaylistTracks] = useState<CardData[]>([]);
+  const [seriesMark, setSeriesMark] = useState("");
 
   // Shared state
   const [isLoading, setIsLoading] = useState(false);
@@ -141,6 +142,7 @@ export default function GeneratorPage() {
       await generateCardsPDFFromTracks(playlistTracks, {
         playlistName,
         filename: `${playlistName}_${new Date().toISOString().split('T')[0]}.pdf`,
+        seriesMark: seriesMark.trim() || undefined,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -289,6 +291,21 @@ export default function GeneratorPage() {
               <small>
                 Supports: spotify:playlist:ID, open.spotify.com URL, or playlist ID
               </small>
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label htmlFor="seriesMark">Series mark (optional, 2–3 letters):</label>
+              <input
+                id="seriesMark"
+                type="text"
+                placeholder="e.g. A1"
+                value={seriesMark}
+                onChange={(e) => setSeriesMark(e.target.value.slice(0, 3))}
+                disabled={isLoading}
+                className={styles.input}
+                style={{ width: "6rem" }}
+              />
+              <small>Printed in the corner of each title card to identify the series.</small>
             </div>
 
             <button

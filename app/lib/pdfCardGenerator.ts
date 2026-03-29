@@ -49,6 +49,7 @@ let watermarkDataUrl: string | null = null;
 export interface PDFGenerationOptions {
   filename?: string;
   playlistName?: string;
+  seriesMark?: string; // Short series identifier (2-3 chars) shown in bottom-right of title cards
 }
 
 /**
@@ -63,6 +64,7 @@ export async function generateCardsPDFFromTracks(
   const {
     filename = `chimeline-cards-${new Date().toISOString().split('T')[0]}.pdf`,
     playlistName = 'ChimeLine',
+    seriesMark,
   } = options;
 
   try {
@@ -187,6 +189,13 @@ export async function generateCardsPDFFromTracks(
                     alignment: 'center',
                     margin: [0, 45, 0, 0],
                   },
+                  ...(seriesMark ? [{
+                    text: seriesMark.toUpperCase(),
+                    fontSize: 7,
+                    color: '#aaaaaa',
+                    alignment: 'right' as const,
+                    margin: [0, 4, 2, 0],
+                  }] : []),
                 ],
                 verticalAlignment: 'middle',
               },
