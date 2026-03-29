@@ -170,21 +170,6 @@ export default function GeneratorPage() {
         </button>
       </div>
 
-      <div className={styles.instructionsSection}>
-        <button
-          onClick={() => generateInstructionPDF()}
-          className={styles.buttonSecondary}
-        >
-          {t('generator.downloadInstructions')}
-        </button>
-        <button
-          onClick={() => generateBonusCardsPDF()}
-          className={styles.buttonSecondary}
-        >
-          {t('generator.downloadBonusCards')}
-        </button>
-      </div>
-
       {error && <div className={styles.error}>{error}</div>}
 
       {playlistTracks.length > 0 && (
@@ -209,6 +194,21 @@ export default function GeneratorPage() {
           </button>
         </div>
       )}
+
+      <div className={styles.instructionsSection}>
+        <button
+          onClick={() => generateInstructionPDF()}
+          className={styles.buttonSecondary}
+        >
+          {t('generator.downloadInstructions')}
+        </button>
+        <button
+          onClick={() => generateBonusCardsPDF()}
+          className={styles.buttonSecondary}
+        >
+          {t('generator.downloadBonusCards')}
+        </button>
+      </div>
     </div>
   );
 }
