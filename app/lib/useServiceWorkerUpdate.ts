@@ -22,32 +22,17 @@ export function useServiceWorkerUpdate() {
 
     let registration: ServiceWorkerRegistration | null = null;
     let checkInterval: NodeJS.Timeout | null = null;
-    let currentBuildHash: string | null = null;
+    // Use the hash baked into this bundle at build time as the "current" version.
+    // This means we detect updates even when both the old and new version.json
+    // would return the same server hash on the same request.
+    let currentBuildHash: string = __BUILD_HASH__;
 
     const registerSW = async () => {
       try {
         registration = await navigator.serviceWorker.register("/service-worker.js", {
           scope: "/",
         });
-        console.log("Service Worker registered");
-
-        // Get initial build hash
-        const getInitialHash = async () => {
-          try {
-            // Use fetch with aggressive cache busting for mobile compatibility
-            const response = await fetch("/version.json", {
-              cache: "no-store", // Never use cached version.json
-              headers: { "Pragma": "no-cache", "Cache-Control": "no-cache" },
-            });
-            const data = await response.json();
-            currentBuildHash = data.buildHash;
-            console.log("✓ Initial build hash loaded:", currentBuildHash);
-          } catch (err) {
-            console.warn("Failed to get initial build hash:", err);
-          }
-        };
-
-        await getInitialHash();
+        console.log("Service Worker registered, bundle hash:", currentBuildHash);
 
         // Check for updates by comparing buildHash in version.json
         const checkForUpdates = async () => {
