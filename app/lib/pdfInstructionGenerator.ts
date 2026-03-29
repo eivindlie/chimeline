@@ -48,6 +48,7 @@ const CONTENT: Record<'nb' | 'en', { heading: string; steps: Step[] }> = {
     heading: 'Slik spiller du',
     steps: [
       { text: 'Åpne chimeline.prograd.no for å scanne' },
+      { text: 'Sørg for å ha et sett bonuskort og minst ett sett QR-kort' },
       { text: 'Alle starter med 3 bonuskort' },
       { text: 'Skann QR-koden på kortet' },
       { text: 'Hør sangen og gjett utgivelsesår' },
@@ -63,6 +64,7 @@ const CONTENT: Record<'nb' | 'en', { heading: string; steps: Step[] }> = {
     heading: 'How to play',
     steps: [
       { text: 'Open chimeline.prograd.no to scan' },
+      { text: 'Make sure to have a set of bonus cards, and at least one set of QR cards' },
       { text: 'Everyone starts with 3 bonus cards' },
       { text: 'Scan the QR code on the card' },
       { text: 'Listen and guess the release year' },
@@ -89,7 +91,7 @@ function buildCell(lang: 'nb' | 'en', logoDataUrl: string) {
       {
         image: logoDataUrl,
         fit: [250, 100],
-        margin: [PAD, 24, PAD, 20],
+        margin: [PAD, 16, PAD, 12],
       },
       {
         text: heading,
@@ -137,7 +139,8 @@ export async function generateInstructionPDF(): Promise<void> {
   const logoDataUrl = await imageToDataUrl(logoFullLightSvg, 2400, 800);
 
   // A4 height 841.89pt. Two rows of 400pt = 800pt, leaving ~42pt buffer.
-  const ROW_HEIGHT = 400;
+  // A4 height 841.89pt — two rows of 410pt = 820pt, leaving ~22pt buffer.
+  const ROW_HEIGHT = 410;
 
   // Each call to buildCell() returns an independent object tree — no shared refs.
   const frontBody = [
@@ -171,8 +174,7 @@ export async function generateInstructionPDF(): Promise<void> {
     pageMargins: [0, 0, 0, 0],
     content: [
       makeTable(frontBody),
-      { text: '', pageBreak: 'after' } as any,
-      makeTable(backBody),
+      { ...makeTable(backBody), pageBreak: 'before' },
     ],
   };
 
