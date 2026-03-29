@@ -17,6 +17,8 @@ const AUTH_STORAGE_KEY = "spotify_token";
 const PKCE_VERIFIER_KEY = "spotify_pkce_verifier";
 const USER_STORAGE_KEY = "spotify_user";
 const STATE_KEY = "spotify_oauth_state";
+const REFRESH_TOKEN_KEY = "spotify_refresh_token";
+const TOKEN_EXPIRY_KEY = "spotify_token_expiry";
 
 /**
  * Generate a random state for CSRF protection
@@ -134,7 +136,7 @@ export async function exchangeCodeForToken(
   state: string,
   clientId: string,
   redirectUri: string
-): Promise<{ access_token: string; expires_in: number }> {
+): Promise<{ access_token: string; expires_in: number; refresh_token?: string }> {
   const codeVerifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
   const storedState = sessionStorage.getItem(STATE_KEY);
 
@@ -200,6 +202,73 @@ export function clearToken(): void {
     sessionStorage.removeItem(PKCE_VERIFIER_KEY);
     sessionStorage.removeItem(USER_STORAGE_KEY);
     sessionStorage.removeItem(STATE_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(TOKEN_EXPIRY_KEY);
+  }
+}
+
+export function saveRefreshToken(token: string): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  }
+}
+
+export function getRefreshToken(): string | null {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  }
+  return null;
+}
+
+export function saveTokenExpiry(expiresIn: number): void {
+  if (typeof window !== "undefined") {
+    const expiresAt = Date.now() + expiresIn * 1000;
+    localStorage.setItem(TOKEN_EXPIRY_KEY, String(expiresAt));
+  }
+}
+
+/**
+ * Returns true if the stored token is expired or will expire within 5 minutes.
+ * Returns false if no expiry info is stored (assume still valid for backwards compat).
+ */
+export function isTokenExpired(): boolean {
+  if (typeof window === "undefined") return false;
+  const expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY);
+  if (!expiresAt) return false;
+  return Date.now() > Number(expiresAt) - 5 * 60 * 1000;
+}
+
+/**
+ * Exchange refresh token for a new access token.
+ * Saves the new token and expiry. Returns the new access token, or null on failure.
+ */
+export async function refreshAccessToken(clientId: string): Promise<string | null> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return null;
+
+  try {
+    const response = await fetch(SPOTIFY_ENDPOINTS.TOKEN, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+        client_id: clientId,
+      }).toString(),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    saveToken(data.access_token);
+    saveTokenExpiry(data.expires_in);
+    // Spotify may rotate the refresh token
+    if (data.refresh_token) {
+      saveRefreshToken(data.refresh_token);
+    }
+    return data.access_token;
+  } catch {
+    return null;
   }
 }
 

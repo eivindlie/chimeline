@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { exchangeCodeForToken, saveToken, fetchUserProfile, saveUser, getAndClearRedirectPath } from "../lib/spotifyAuth";
+import { exchangeCodeForToken, saveToken, saveRefreshToken, saveTokenExpiry, fetchUserProfile, saveUser, getAndClearRedirectPath } from "../lib/spotifyAuth";
 import styles from "./callback.module.css";
 
 export function meta() {
@@ -47,15 +47,19 @@ export default function CallbackPage() {
         }
 
         // Exchange code for token
-        const { access_token } = await exchangeCodeForToken(
+        const { access_token, expires_in, refresh_token } = await exchangeCodeForToken(
           code,
           state,
           clientId,
           redirectUri
         );
 
-        // Save token
+        // Save token and refresh credentials
         saveToken(access_token);
+        saveTokenExpiry(expires_in);
+        if (refresh_token) {
+          saveRefreshToken(refresh_token);
+        }
 
         // Fetch and save user profile
         const userProfile = await fetchUserProfile(access_token);
