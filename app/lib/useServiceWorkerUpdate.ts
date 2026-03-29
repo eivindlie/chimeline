@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
  */
 export function useServiceWorkerUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     // Skip service worker in development mode (allows fresh code on every refresh)
@@ -88,6 +89,7 @@ export function useServiceWorkerUpdate() {
   }, []);
 
   const handleUpdate = () => {
+    setIsUpdating(true);
     console.log("Update button clicked - handling update");
 
     if (!navigator.serviceWorker.controller) {
@@ -131,5 +133,5 @@ export function useServiceWorkerUpdate() {
     }
   };
 
-  return { updateAvailable, handleUpdate };
+  return { updateAvailable, handleUpdate, isUpdating };
 }

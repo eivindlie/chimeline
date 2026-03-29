@@ -49,7 +49,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const navigate = useNavigate();
-  const { updateAvailable, handleUpdate } = useServiceWorkerUpdate();
+  const { updateAvailable, handleUpdate, isUpdating } = useServiceWorkerUpdate();
 
   useEffect(() => {
     // Handle GitHub Pages 404.html redirect fallback for SPA routing
@@ -68,9 +68,10 @@ export default function App() {
           <span>✨ A new version is available</span>
           <button
             onClick={handleUpdate}
+            disabled={isUpdating}
             className={styles.updateButton}
           >
-            Update
+            {isUpdating ? <span className={styles.updateSpinner} /> : "Update"}
           </button>
         </div>
       )}

@@ -46,3 +46,23 @@
   transform: scale(0.98);
 }
 
+.updateButton:disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+
+.updateSpinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--accent-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
