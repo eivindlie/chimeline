@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/scanner";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
+import { useWakeLock } from "../lib/useWakeLock";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
 import { useDeviceKeepAlive } from "../lib/useDeviceKeepAlive";
 import { playTrack, pausePlayback, resumePlayback } from "../lib/spotifyPlayback";
@@ -48,6 +49,9 @@ export default function ScannerPage() {
 
   // Check auth and redirect to login if needed
   const isAuthed = useAuthRedirect("/scanner");
+
+  // Keep screen on while the scanner page is active
+  useWakeLock(isAuthed);
 
   // Detect device type
   const isDesktop = () => {
