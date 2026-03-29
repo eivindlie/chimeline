@@ -140,7 +140,8 @@ export default function GeneratorPage() {
             className={styles.input}
           />
           <small>
-            Supports: spotify:playlist:ID, open.spotify.com URL, or playlist ID
+            Supports: spotify:playlist:ID, open.spotify.com URL, or playlist ID.
+            The playlist must be owned by you or followed in your Spotify account — editorial and third-party playlists you don't follow cannot be fetched.
           </small>
         </div>
 
