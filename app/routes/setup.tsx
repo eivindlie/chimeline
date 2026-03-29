@@ -3,7 +3,8 @@ import { useNavigate } from "react-router";
 import { getToken } from "~/lib/spotifyAuth";
 import { useAuthRedirect } from "~/lib/useAuthRedirect";
 import { useSpotifyPlayer } from "~/lib/useSpotifyPlayer";
-import { playTrack, pausePlayback } from "~/lib/spotifyPlayback";
+import { playTrack } from "~/lib/spotifyPlayback";
+import { virtualPause } from "~/lib/virtualPausePlayback";
 import { saveSelectedDeviceId, SETUP_TRACK_ID, buildSpotifyTrackUri, fetchAvailableDevices } from "~/lib/spotifyDevices";
 import styles from "./setup.module.css";
 
@@ -59,9 +60,9 @@ export default function Setup() {
         // Then pause and redirect to scanner
         setTimeout(async () => {
           try {
-            await pausePlayback(player, deviceId);
+            await virtualPause(deviceId);
           } catch (err) {
-            console.warn("Could not pause, but device is ready:", err);
+            console.warn("Could not virtual pause, but device is ready:", err);
           }
           
           setStep("success");
@@ -109,7 +110,13 @@ export default function Setup() {
           // Fallback to first device if none are active
           const activeDevice = devices.find((d) => d.is_active) || devices[0];
           saveSelectedDeviceId(activeDevice.id);
-          
+
+          try {
+            await virtualPause(activeDevice.id);
+          } catch (err) {
+            console.warn("Could not virtual pause, but device is ready:", err);
+          }
+
           console.log("Mobile setup complete. Device saved:", activeDevice.name, `(${activeDevice.id})`);
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Failed to fetch devices";
