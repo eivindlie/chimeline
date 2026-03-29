@@ -131,6 +131,7 @@ The game is distributed in **ziplock bags** (10×15cm bags fit both the 65×65mm
 - **Mobile requires Spotify app**: REST API playback only — no in-browser audio on mobile.
 - **No auth guards**: All routes are publicly accessible by URL. Fine for now.
 - **Token expiry**: Handled via silent refresh using `refresh_token` (stored in `localStorage`). Falls back to login if refresh fails.
+- **Wake Lock not supported on iOS**: `navigator.wakeLock` is a Chrome/Android feature. iOS Safari does not support it, even when the app is installed as a PWA. The screen will dim during a round if the player doesn't interact with it — no web workaround available.
 
 ---
 
