@@ -5,7 +5,11 @@
   },
   "home": {
     "start": "🎵 Spill nå",
-    "generate": "Generér QR-koder"
+    "generate": "Generér QR-koder",
+    "installHint": "Legg til ChimeLine på hjemskjermen for rask tilgang",
+    "installHintIOS": "Trykk på Del-knappen, deretter «Legg til på hjemskjerm»",
+    "installButton": "Legg til på hjemskjerm",
+    "installDismiss": "Ikke nå"
   },
   "scanner": {
     "startScanning": "Skann første sang",

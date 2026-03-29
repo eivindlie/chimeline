@@ -5,7 +5,11 @@
   },
   "home": {
     "start": "🎵 Play now",
-    "generate": "Generate QR codes"
+    "generate": "Generate QR codes",
+    "installHint": "Add ChimeLine to your home screen for quick access",
+    "installHintIOS": "Tap the Share button, then \"Add to Home Screen\"",
+    "installButton": "Add to Home Screen",
+    "installDismiss": "Not now"
   },
   "scanner": {
     "startScanning": "Scan first song",

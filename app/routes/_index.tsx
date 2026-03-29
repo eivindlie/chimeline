@@ -5,6 +5,7 @@ import type { Route } from "./+types/_index";
 import styles from "./_index.module.css";
 import LogoFull from "../assets/logo-full-dark.svg";
 import { clearSelectedDeviceId } from "../lib/spotifyDevices";
+import { useInstallPrompt } from "../lib/useInstallPrompt";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,6 +17,7 @@ export function meta({}: Route.MetaArgs) {
 export default function Home() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { show: showInstall, isIOS, handleInstall, handleDismiss } = useInstallPrompt();
 
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -72,6 +74,24 @@ export default function Home() {
             en
           </button>
         </div>
+
+        {showInstall && (
+          <div className={styles.installPrompt}>
+            <p className={styles.installText}>
+              {isIOS ? t('home.installHintIOS') : t('home.installHint')}
+            </p>
+            <div className={styles.installActions}>
+              {!isIOS && (
+                <button onClick={handleInstall} className={styles.installButton}>
+                  {t('home.installButton')}
+                </button>
+              )}
+              <button onClick={handleDismiss} className={styles.installDismiss}>
+                {t('home.installDismiss')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

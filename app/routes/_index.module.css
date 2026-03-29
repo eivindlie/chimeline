@@ -88,6 +88,60 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.installPrompt {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.installText {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
+  line-height: 1.4;
+}
+
+.installActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+.installButton {
+  background: var(--accent-primary);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.installButton:hover {
+  background: var(--accent-primary-hover);
+}
+
+.installDismiss {
+  background: transparent;
+  color: var(--text-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: var(--transition-short);
+}
+
+.installDismiss:hover {
+  color: var(--text-secondary);
+  border-color: var(--text-tertiary);
+}
+
 /* Mobile responsiveness */
 @media (max-width: 480px) {
   .container {
