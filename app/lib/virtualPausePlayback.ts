@@ -1,123 +1,99 @@
 /**
  * Virtual pause implementation
- * 
- * Never actually call Spotify pause endpoint.
- * Instead, simulate pause by:
- * 1. Getting current player state (position, volume, track)
- * 2. Setting volume to 1% (keeps device alive, barely audible)
- * 3. Storing position for later resume
- * 
- * When resuming:
- * 1. Seek to stored position
- * 2. Wait 100-300ms for seek to complete
- * 3. Restore volume to previous level
- * 
- * Playback always continues in background (repeat=track prevents track ending)
+ *
+ * Never call the Spotify pause endpoint — paused devices disappear after ~10s.
+ * Instead, simulate pause by switching to a silent track (John Cage – 4'33'').
+ *
+ * On pause:
+ * 1. Read current player state (position, track URI)
+ * 2. Store position + URI for later resume
+ * 3. Switch playback to 4'33'' (completely silent, device stays alive)
+ *
+ * On resume:
+ * 1. Switch back to the original track URI
+ * 2. Seek to the stored position
+ *
+ * This avoids the REST API volume endpoint entirely, which returns 403
+ * on iOS regardless of scopes.
  */
 
 import {
+  playTrack,
   getPlayerState,
-  setVolumePercent,
   seekToPosition,
   setRepeatMode,
 } from "./spotifyPlayback";
-import type {
-  VirtualPauseState,
-} from "./virtualPause";
+import type { VirtualPauseState } from "./virtualPause";
 import {
   saveVirtualPauseState,
   getVirtualPauseState,
   clearVirtualPauseState,
 } from "./virtualPause";
 
-const VIRTUAL_PAUSE_VOLUME = 0; // 0% = silent; playback continues so device stays alive
+// John Cage – 4'33'' (completely silent, ideal as a pause placeholder)
+const SILENCE_TRACK_URI = "spotify:track:6WoJVn1hqh0OTLhA1VrJR4";
 
 /**
- * Initialize playback with repeat mode and volume
+ * Initialize playback with repeat mode so the device stays alive indefinitely
  */
 export async function initializePlayback(_deviceId: string): Promise<void> {
   try {
-    // Enable repeat track mode so it loops indefinitely
-    // This prevents device from going inactive when track ends
     await setRepeatMode("track");
     console.log("✓ Repeat mode enabled (track)");
   } catch (err) {
     console.warn("Failed to enable repeat mode:", err);
-    // Non-blocking - continue even if repeat fails
+    // Non-blocking — continue even if repeat fails
   }
 }
 
 /**
- * Simulate pause by reducing volume and storing position
- * Does NOT call the pause endpoint
+ * Simulate pause by switching to a silent track and storing the current position.
+ * Does NOT call the pause endpoint.
  */
 export async function virtualPause(deviceId: string): Promise<void> {
-  try {
-    // Get current player state before we change it
-    const state = await getPlayerState(deviceId);
+  const state = await getPlayerState(deviceId);
 
-    if (!state || !state.is_playing) {
-      console.log("Already paused or no playback state");
-      return;
-    }
-
-    // Store state for resume
-    const pauseState: VirtualPauseState = {
-      isPaused: true,
-      storedPosition: state.progress_ms || 0,
-      previousVolume: state.device?.volume_percent || 80,
-      trackUri: state.item?.uri || "",
-    };
-
-    saveVirtualPauseState(pauseState);
-
-    // Mute audio to 1% (not 0, as that can cause iOS sleep)
-    await setVolumePercent(deviceId, VIRTUAL_PAUSE_VOLUME);
-
-    console.log(
-      `⏸ Virtual pause: volume→1%, position stored at ${pauseState.storedPosition}ms`
-    );
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    console.error("Virtual pause failed:", errMsg);
-    throw err;
+  if (!state || !state.is_playing) {
+    console.log("Already paused or no playback state");
+    return;
   }
+
+  const pauseState: VirtualPauseState = {
+    isPaused: true,
+    storedPosition: state.progress_ms || 0,
+    trackUri: state.item?.uri || "",
+  };
+
+  saveVirtualPauseState(pauseState);
+
+  // Switch to silence — device stays active, no audio
+  await playTrack(null, SILENCE_TRACK_URI, deviceId);
+
+  console.log(`⏸ Virtual pause: switched to 4'33'', position stored at ${pauseState.storedPosition}ms`);
 }
 
 /**
- * Simulate resume by seeking to stored position and restoring volume
- * Does NOT call the play endpoint (playback never stopped)
+ * Simulate resume by switching back to the original track and seeking to the stored position.
  */
 export async function virtualResume(deviceId: string): Promise<void> {
-  try {
-    const pauseState = getVirtualPauseState();
+  const pauseState = getVirtualPauseState();
 
-    if (!pauseState.isPaused) {
-      console.log("Not paused, resume not necessary");
-      return;
-    }
-
-    // Seek to stored position
-    await seekToPosition(deviceId, pauseState.storedPosition);
-
-    // Wait for seek to complete before restoring volume
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    // Restore volume to restore audio
-    await setVolumePercent(deviceId, pauseState.previousVolume);
-
-    console.log(
-      `▶ Virtual resume: restored to position ${pauseState.storedPosition}ms, volume→${pauseState.previousVolume}%`
-    );
-
-    // Clear pause state
-    pauseState.isPaused = false;
-    saveVirtualPauseState(pauseState);
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    console.error("Virtual resume failed:", errMsg);
-    throw err;
+  if (!pauseState.isPaused) {
+    console.log("Not paused, resume not necessary");
+    return;
   }
+
+  // Switch back to the original track
+  await playTrack(null, pauseState.trackUri, deviceId);
+
+  // Wait briefly for the track switch to take effect before seeking
+  await new Promise((resolve) => setTimeout(resolve, 300));
+
+  await seekToPosition(deviceId, pauseState.storedPosition);
+
+  clearVirtualPauseState();
+
+  console.log(`▶ Virtual resume: back to original track at ${pauseState.storedPosition}ms`);
 }
 
 /**
@@ -128,13 +104,10 @@ export function isVirtuallyPaused(): boolean {
 }
 
 /**
- * Restore volume to its pre-pause level and clear virtual pause state.
- * Call this before starting a new track so it doesn't play at muted volume.
+ * Clear virtual pause state when starting a new track.
+ * The new playTrack call will already overwrite 4'33'', so no extra
+ * API call is needed — just clear the stored state.
  */
-export async function restoreVolume(deviceId: string): Promise<void> {
-  const state = getVirtualPauseState();
-  if (!state.isPaused) return;
-
-  await setVolumePercent(deviceId, state.previousVolume);
+export async function restoreVolume(_deviceId: string): Promise<void> {
   clearVirtualPauseState();
 }

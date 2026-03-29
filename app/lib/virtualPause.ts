@@ -12,7 +12,6 @@
 export interface VirtualPauseState {
   isPaused: boolean;
   storedPosition: number; // milliseconds
-  previousVolume: number; // 0-100
   trackUri: string;
 }
 
@@ -20,7 +19,6 @@ export function createVirtualPauseState(): VirtualPauseState {
   return {
     isPaused: false,
     storedPosition: 0,
-    previousVolume: 80, // default volume
     trackUri: "",
   };
 }
