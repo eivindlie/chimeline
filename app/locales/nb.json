@@ -35,6 +35,8 @@
     "trackCount_other": "{{count}} spor",
     "downloadPdf": "📥 Last ned PDF",
     "generatingPdf": "Genererer PDF...",
+    "downloadInstructions": "📄 Last ned instruksjonsark",
+    "downloadBonusCards": "🃏 Last ned bonuskort",
     "redirecting": "Videresender til Spotify-innlogging..."
   },
   "setup": {

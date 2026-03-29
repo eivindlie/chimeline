@@ -35,6 +35,8 @@
     "trackCount_other": "{{count}} tracks",
     "downloadPdf": "📥 Download PDF",
     "generatingPdf": "Generating PDF...",
+    "downloadInstructions": "📄 Download instruction sheet",
+    "downloadBonusCards": "🃏 Download bonus cards",
     "redirecting": "Redirecting to Spotify login..."
   },
   "setup": {

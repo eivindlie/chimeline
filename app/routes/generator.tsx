@@ -7,6 +7,8 @@ import { generateQRCodeBlob } from "../lib/qrGenerator";
 import { type CardData } from "../lib/schemas";
 import { parsePlaylistUrl, fetchPlaylistTracks } from "../lib/spotifyPlaylist";
 import { generateCardsPDFFromTracks } from "../lib/pdfCardGenerator";
+import { generateInstructionPDF } from "../lib/pdfInstructionGenerator";
+import { generateBonusCardsPDF } from "../lib/pdfBonusCardGenerator";
 import styles from "./generator.module.css";
 
 export function meta({}: Route.MetaArgs) {
@@ -165,6 +167,21 @@ export default function GeneratorPage() {
           className={styles.button}
         >
           {isLoading ? t('generator.fetching') : t('generator.fetch')}
+        </button>
+      </div>
+
+      <div className={styles.instructionsSection}>
+        <button
+          onClick={() => generateInstructionPDF()}
+          className={styles.buttonSecondary}
+        >
+          {t('generator.downloadInstructions')}
+        </button>
+        <button
+          onClick={() => generateBonusCardsPDF()}
+          className={styles.buttonSecondary}
+        >
+          {t('generator.downloadBonusCards')}
         </button>
       </div>
 

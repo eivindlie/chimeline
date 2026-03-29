@@ -105,6 +105,30 @@
   cursor: not-allowed;
 }
 
+.instructionsSection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+}
+
+.buttonSecondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.buttonSecondary:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
 .error {
   background: rgba(255, 92, 92, 0.1);
   border: 1px solid var(--error);
