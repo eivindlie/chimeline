@@ -1,5 +1,7 @@
 # ChimeLine — Claude Context
 
+> Keep this file up to date. Update **Next Priorities** and **Known Limitations** as part of any commit that changes them.
+
 ## What It Is
 
 **ChimeLine** is a static React + TypeScript PWA for playing songs via QR codes during a timeline-based card game. Players scan QR codes to hear a song, then place cards on a timeline based on release year.
