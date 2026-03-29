@@ -5,8 +5,7 @@ import type { Route } from "./+types/scanner";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { useWakeLock } from "../lib/useWakeLock";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
-import { useDeviceKeepAlive } from "../lib/useDeviceKeepAlive";
-import { playTrack, pausePlayback, resumePlayback } from "../lib/spotifyPlayback";
+import { playTrack } from "../lib/spotifyPlayback";
 import {
   initializePlayback,
   virtualPause,
