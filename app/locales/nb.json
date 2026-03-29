@@ -58,6 +58,7 @@
     "authenticating": "Autentiserer..."
   },
   "funFacts": {
+    "prefix": "Visste du at...",
     "1": "Når du trykker pause, spiller du faktisk John Cage's 4'33'' — et musikkstykke som utelukkende består av stillhet.",
     "2": "QR-koder kan lagre opptil 3KB data. ChimeLine bruker omtrent 40 bytes.",
     "3": "Den eldste sangen med en kjent komponist er en sumerisk hymne fra rundt 1400 f.Kr.",

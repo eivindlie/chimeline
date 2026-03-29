@@ -340,7 +340,7 @@ export default function ScannerPage() {
 
       {/* Fun fact — shown in initial state only */}
       {!lastScanned && !isScanning && !isLoadingTrack && (
-        <p className={styles.funFact}>{t(`funFacts.${factIndex}` as any)}</p>
+        <p className={styles.funFact}>{t('funFacts.prefix' as any)} {t(`funFacts.${factIndex}` as any)}</p>
       )}
 
       {/* Scanning state: Camera view */}

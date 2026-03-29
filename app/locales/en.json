@@ -58,6 +58,7 @@
     "authenticating": "Authenticating..."
   },
   "funFacts": {
+    "prefix": "Did you know...",
     "1": "When you press pause, you're actually playing John Cage's 4'33'' — a piece of music consisting entirely of silence.",
     "2": "QR codes can store up to 3KB of data. ChimeLine uses about 40 bytes.",
     "3": "The oldest song with a known composer is a Sumerian hymn from around 1400 BC.",
