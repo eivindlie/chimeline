@@ -259,13 +259,13 @@ export default function ScannerPage() {
         }
 
         const fullData = await fetchTrackMetadata(trackId, token);
-        setLastScanned(fullData);
 
         try {
           await handlePlay(fullData);
         } catch (playbackError) {
           console.warn("Playback failed (non-blocking):", playbackError);
         }
+        setLastScanned(fullData);
         setIsLoadingTrack(false);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
