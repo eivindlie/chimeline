@@ -119,7 +119,13 @@ Build hash baked into bundle via `vite.config.ts` `define: { __BUILD_HASH__ }` (
 
 ## Next Priorities
 
-1. **Fun fact blurbs** — surface easter-egg facts in the UI (e.g. "When you press pause, you're playing John Cage's 4'33''")
+1. **Fun fact blurbs** — surface easter-egg facts in the UI. Candidate facts:
+   - "When you press pause, you're actually playing John Cage's *4'33''* — a piece of music consisting entirely of silence."
+   - "QR codes can store up to 3KB of data. ChimeLine uses about 40 bytes."
+   - "The oldest song with a known composer is a Sumerian hymn from around 1400 BC."
+   - "Vinyl records spin at 33⅓ RPM — a speed chosen in 1948 to fit a full symphony on one side."
+   - "The first music video ever broadcast on MTV was 'Video Killed the Radio Star' by The Buggles, on August 1, 1981."
+   - "A standard CD holds 74 minutes of audio — chosen specifically to fit Beethoven's 9th Symphony."
 2. **i18n** — Norwegian (`nb`) as primary language; `nb-NO` date formatting already in use
 3. **Printable instruction sheet** — PDF export from generator explaining how to play (scan → listen → place card on timeline), with series mark legend
 
