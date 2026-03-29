@@ -283,7 +283,8 @@ export default function ScannerPage() {
     );
   }
 
-  if (!selectedDeviceId) {
+  // Mobile requires a saved device ID; desktop uses the SDK's deviceId instead
+  if (!isDesktop() && !selectedDeviceId) {
     return (
       <div className={styles.container}>
         <div className={styles.error}>Device not configured</div>
@@ -301,14 +302,21 @@ export default function ScannerPage() {
         <img src={LogoIcon} alt="ChimeLine" className={styles.logo} />
       </div>
 
-      {/* Initial state: Just scan button */}
+      {/* Initial state: connecting spinner (desktop SDK not ready) or scan button */}
       {!lastScanned && !isScanning && (
-        <button
-          onClick={handleStartScanning}
-          className={styles.scanButton}
-        >
-          Start Scanning
-        </button>
+        isDesktop() && token && !playerReady ? (
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <p>{playerError ?? "Connecting to Spotify..."}</p>
+          </div>
+        ) : (
+          <button
+            onClick={handleStartScanning}
+            className={styles.scanButton}
+          >
+            Start Scanning
+          </button>
+        )
       )}
 
       {/* Scanning state: Camera view */}
