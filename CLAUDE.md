@@ -141,7 +141,11 @@ The game is distributed in **ziplock bags** (10×15cm bags fit both the 65×65mm
 
 ## Next Priorities
 
-No outstanding priorities. Suggest new features or improvements!
+1. **Bring-your-own Spotify app (BYOS)** — workaround for the development mode user cap. Allow power users to set a custom Spotify Client ID in `localStorage`, overriding the default `VITE_SPOTIFY_CLIENT_ID`. Since PKCE requires no client secret, sharing a Client ID is safe.
+   - **Notice on home page**: small, unobtrusive link/text explaining that the app may require registration, pointing to a help page
+   - **Help/setup page** (e.g. `/spotify-setup`): explains why the restriction exists, step-by-step instructions for creating a Spotify app at developer.spotify.com, where to find the Client ID, and how to enter it in ChimeLine. Must also explain why sharing a Client ID is safe — PKCE requires no client secret, so the Client ID alone cannot be used to impersonate the user or access their account
+   - **Client ID input**: stored in `localStorage` as e.g. `chimeline_spotify_client_id`; if present, used instead of the env default
+   - **Redirect URI**: users must add `https://chimeline.prograd.no/callback` to their Spotify app's allowed redirect URIs — this must be clearly documented on the help page
 
 ---
 
