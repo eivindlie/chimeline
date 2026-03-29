@@ -134,6 +134,10 @@ The game is distributed in **ziplock bags** (10×15cm bags fit both the 65×65mm
 
 ---
 
+## Design Decisions
+
+- **No song reveal in the scanner** — the app is a pure audio trigger. Title, artist, and year are only on the physical card. This keeps players engaged with the table rather than their phones, and matches how the original game (Hitster) works.
+
 ## Next Priorities
 
 No outstanding priorities. Suggest new features or improvements!
