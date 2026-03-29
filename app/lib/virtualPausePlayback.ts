@@ -31,7 +31,7 @@ import {
 } from "./virtualPause";
 
 // John Cage – 4'33'' (completely silent, ideal as a pause placeholder)
-const SILENCE_TRACK_URI = "spotify:track:6WoJVn1hqh0OTLhA1VrJR4";
+const SILENCE_TRACK_URI = "spotify:track:2bNCdW4rLnCTzgqUXTTDO1";
 
 /**
  * Initialize playback with repeat mode so the device stays alive indefinitely
