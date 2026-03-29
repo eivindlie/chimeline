@@ -203,19 +203,13 @@ export async function generateCardsPDFFromTracks(
               },
             ],
             verticalAlignment: 'middle',
-            border: [1, 1, 1, 1],
-            borderColor: '#ffffff',
             margin: [5, 5, 5, 5],
           };
         });
 
         // Pad with empty cells
         while (cells.length < 3) {
-          cells.push({
-            text: '',
-            border: [1, 1, 1, 1] as [number, number, number, number],
-            borderColor: '#ffffff',
-          });
+          cells.push({ text: '' });
         }
 
         titleTableBody.push(cells);
@@ -285,10 +279,8 @@ export async function generateCardsPDFFromTracks(
           headerRows: 0,
         },
         layout: {
-          hLineWidth: () => 0.5,
-          vLineWidth: () => 0.5,
-          hLineColor: () => '#ffffff',
-          vLineColor: () => '#ffffff',
+          hLineWidth: () => 0,
+          vLineWidth: () => 0,
         },
       });
       if (pageIndex < pageCount - 1) {
