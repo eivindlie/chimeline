@@ -8,3 +8,6 @@
 
 # Local HTTPS development certificates (never commit)
 .ssl/
+
+# Generated at build time by scripts/update-version.js — never commit
+/public/version.json
