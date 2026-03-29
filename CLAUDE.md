@@ -50,6 +50,8 @@ app/
 
 **Tech stack**: React Router v7 (SPA, `ssr: false`), TypeScript, Vite, CSS Modules, pnpm
 
+**i18n**: `react-i18next` with Norwegian (`nb`) as default, English (`en`) via switcher on home page. Translation files in `app/locales/`. Language persists to `localStorage`. Type-safe: `t()` calls checked against `en.json` shape at build time.
+
 ---
 
 ## Key Patterns
@@ -127,8 +129,7 @@ Build hash baked into bundle via `vite.config.ts` `define: { __BUILD_HASH__ }` (
    - "The first music video ever broadcast on MTV was 'Video Killed the Radio Star' by The Buggles, on August 1, 1981."
    - "A standard CD holds 74 minutes of audio — chosen specifically to fit Beethoven's 9th Symphony."
 2. **Add to Home Screen prompt** — popup suggesting users install the PWA on compatible devices (iOS Safari, Android Chrome); use `beforeinstallprompt` on Android, show manual instructions on iOS
-3. **i18n** — Norwegian (`nb`) as primary language; `nb-NO` date formatting already in use
-4. **Printable instruction sheet** — PDF export from generator explaining how to play (scan → listen → place card on timeline), with series mark legend
+3. **Printable instruction sheet** — PDF export from generator explaining how to play (scan → listen → place card on timeline), with series mark legend
 
 ---
 
