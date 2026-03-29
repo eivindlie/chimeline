@@ -113,17 +113,16 @@ Build hash baked into bundle via `vite.config.ts` `define: { __BUILD_HASH__ }` (
 - **Web Playback SDK 5-user limit**: Spotify development accounts are capped at 5 users. Fine for current use; production scale needs Spotify approval.
 - **Mobile requires Spotify app**: REST API playback only — no in-browser audio on mobile.
 - **No auth guards**: All routes are publicly accessible by URL. Fine for now.
-- **Token expiry not handled**: `sessionStorage` tokens expire after ~1 hour; user must re-auth.
+- **Token expiry**: Handled via silent refresh using `refresh_token` (stored in `localStorage`). Falls back to login if refresh fails.
 
 ---
 
 ## Next Priorities
 
 1. **Auth guards** on `/scanner` and `/generator` routes
-2. **Token refresh** — handle expired tokens gracefully instead of breaking silently
-3. **Fun fact blurbs** — surface easter-egg facts in the UI (e.g. "When you press pause, you're playing John Cage's 4'33''")
-4. **i18n** — Norwegian (`nb`) as primary language; `nb-NO` date formatting already in use
-5. **Printable instruction sheet** — PDF export from generator explaining how to play (scan → listen → place card on timeline), with series mark legend
+2. **Fun fact blurbs** — surface easter-egg facts in the UI (e.g. "When you press pause, you're playing John Cage's 4'33''")
+3. **i18n** — Norwegian (`nb`) as primary language; `nb-NO` date formatting already in use
+4. **Printable instruction sheet** — PDF export from generator explaining how to play (scan → listen → place card on timeline), with series mark legend
 
 ---
 
