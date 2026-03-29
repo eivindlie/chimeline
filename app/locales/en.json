@@ -4,11 +4,11 @@
     "update": "Update"
   },
   "home": {
-    "start": "🎵 Start playing",
+    "start": "🎵 Play now",
     "generate": "Generate QR codes"
   },
   "scanner": {
-    "startScanning": "Start Scanning",
+    "startScanning": "Scan first song",
     "cancel": "Cancel",
     "scanNext": "📱 Scan next",
     "connecting": "Connecting to Spotify...",
@@ -41,7 +41,7 @@
     "instruction1": "Click the button to open Spotify.",
     "instruction2": "Listen for an iconic theme—verify you hear sound.",
     "instruction3": "Return to the app when ready. ✨",
-    "testDevice": "Test Device",
+    "testDevice": "Test sound",
     "playing": "Playing test track...",
     "settingUp": "Setting up...",
     "ready": "Ready to play!",

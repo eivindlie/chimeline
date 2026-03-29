@@ -4,11 +4,11 @@
     "update": "Oppdater"
   },
   "home": {
-    "start": "🎵 Start spilling",
-    "generate": "Generer QR-koder"
+    "start": "🎵 Spill nå",
+    "generate": "Generér QR-koder"
   },
   "scanner": {
-    "startScanning": "Begynn å skanne",
+    "startScanning": "Skann første sang",
     "cancel": "Avbryt",
     "scanNext": "📱 Skann neste",
     "connecting": "Kobler til Spotify...",
@@ -21,13 +21,13 @@
   },
   "generator": {
     "title": "QR-kodegenerator",
-    "subtitle": "Generer QR-kort til utskrift fra en Spotify-spilleliste",
-    "playlistLabel": "Spotify-spilleliste-URL eller URI:",
+    "subtitle": "Generér QR-kort til utskrift fra en Spotify-spilleliste",
+    "playlistLabel": "URL/URI til Spotify-spilleliste:",
     "playlistPlaceholder": "lim inn spotify:playlist:XXXX eller https://open.spotify.com/playlist/XXXX",
     "playlistHint": "Støtter: spotify:playlist:ID, open.spotify.com-URL, eller spilleliste-ID. Spillelisten må eies av deg eller følges i din Spotify-konto — redaksjonelle og tredjepartsspillelister du ikke følger, kan ikke hentes.",
     "seriesLabel": "Seriemerke (valgfritt, 2–3 bokstaver):",
     "seriesPlaceholder": "f.eks. A1",
-    "seriesHint": "Trykkes i hjørnet av hvert titelkort for å identifisere serien.",
+    "seriesHint": "Trykkes i hjørnet av hvert tittelkort for å identifisere serien.",
     "fetch": "Hent spilleliste",
     "fetching": "Henter spor...",
     "tracksHeading": "Spillelistespor",
@@ -39,9 +39,9 @@
   },
   "setup": {
     "instruction1": "Trykk på knappen for å åpne Spotify.",
-    "instruction2": "Lytt etter et kjent tema — bekreft at du hører lyd.",
+    "instruction2": "Lytt etter en kjent temasang — og bekreft at du hører lyd.",
     "instruction3": "Kom tilbake til appen når du er klar. ✨",
-    "testDevice": "Test enhet",
+    "testDevice": "Test lyden",
     "playing": "Spiller testspor...",
     "settingUp": "Setter opp...",
     "ready": "Klar til å spille!",
