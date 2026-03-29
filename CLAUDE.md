@@ -763,6 +763,7 @@ gh-pages -d dist  # or manual upload of dist/ contents
 
 ## Future Enhancements (Post-MVP)
 
+- **Fun fact blurbs**: Surface easter-egg-style facts somewhere in the UI — e.g. "Did you know? When you press pause, you're actually playing John Cage's 4'33''."
 - **PDF Generation**: Use jsPDF + html2canvas for double-sided card printing
 - **Card Set Management**: Save/load card sets in IndexedDB or localStorage
 - **Offline Mode**: Cache Spotify metadata for scanning without internet
@@ -1793,3 +1794,56 @@ Test on iPhone to verify fresh code loads without hard refresh when buildHash ch
 - Console logging could be more granular for debugging
 - Error handling in `useSpotifyPlayer` needs fallback messaging
 - Device ID null-check logic repeated in multiple places
+
+---
+
+## Session 3 – March 29, 2026
+
+**Session Focus**: Fix the three blocking issues from Session 2.
+
+### ✅ Completed:
+
+**Issue 1 – Desktop scanner "Device not ready" (FIXED)**
+- Root cause 1: Early-return guard `if (!selectedDeviceId)` blocked scanner UI on desktop entirely (desktop never has a `selectedDeviceId`, it uses SDK's `deviceId`)
+- Root cause 2: Race condition — user could click "Start Scanning" before the Web Playback SDK finished initializing (`deviceId` was null)
+- Fix: Guard is now `if (!isDesktop() && !selectedDeviceId)`. On desktop, the "Start Scanning" button is replaced with a spinner ("Connecting to Spotify...") until `playerReady` is true, guaranteeing `deviceId` is set before scanning starts. If `playerError` is set, the error message is shown instead.
+
+**Issue 2 – Phone update detection not working (FIXED)**
+- Root cause: `getInitialHash` and `checkForUpdates` both fetched from the server simultaneously — they always matched, so no update was ever detected after a fresh PWA launch
+- Fix: `__BUILD_HASH__` is now baked into the bundle via `vite.config.ts` `define`. The hook uses this as `currentBuildHash` (the version the user is *actually running*) and compares against the server's `version.json`. A mismatch → update banner.
+
+**Issue 3 – Virtual pause 403 on iOS (FIXED with a better solution)**
+- Root cause: `PUT /v1/me/player/volume` returns 403 on iOS because iOS controls volume at the OS level — this is a Spotify API limitation, not a scope issue
+- Fix: Replaced volume-muting approach entirely with **John Cage's 4'33''** (a completely silent track). On pause, playback switches to 4'33'' (device stays alive, no audio). On resume, switches back to original track and seeks to stored position. No volume API calls anywhere.
+- Side effect: `previousVolume` field removed from `VirtualPauseState` (no longer needed)
+
+**Small improvements:**
+- `VIRTUAL_PAUSE_VOLUME` → 0 (was 1%), then removed entirely
+- `restoreVolume()` simplified to just clear virtual pause state (new `playTrack` overwrites 4'33'' automatically)
+- New track now starts before volume restore (plays at 0% briefly, then restores) for smoother transition — most tracks have silence at start
+
+### 📋 Files Modified:
+- `app/routes/scanner.tsx` — SDK connecting spinner, guard fix, restoreVolume call order
+- `app/lib/virtualPause.ts` — Removed `previousVolume` from `VirtualPauseState`
+- `app/lib/virtualPausePlayback.ts` — Replaced volume approach with 4'33'' track switch
+- `vite.config.ts` — Added `__BUILD_HASH__` define
+- `app/lib/useServiceWorkerUpdate.ts` — Use `__BUILD_HASH__` as initial version
+- `app/globals.d.ts` — TypeScript declaration for `__BUILD_HASH__`
+
+### 🎯 Git Commits This Session:
+1. `fix: Show SDK connecting spinner on desktop before allowing scan`
+2. `fix: Silence virtual pause fully and restore volume before next track`
+3. `fix: Replace volume-muting virtual pause with 4'33'' track switch`
+
+### ✨ Key Decision – 4'33'' as Pause Track:
+John Cage's *4'33''* (4 minutes 33 seconds of silence) is the ideal pause track:
+- Completely silent — no audio leaks during pause
+- Long enough that repeat=track never causes an audible loop
+- Works on all platforms — no volume API required
+- Genuinely funny: "Did you know? When you press pause, you're actually playing John Cage's 4'33''."
+- Future idea: surface this as an easter-egg blurb in the UI
+
+### 📌 Next Priorities:
+1. Test 4'33'' virtual pause on mobile — verify device stays alive after a few minutes
+2. Test update detection on iPhone (was previously broken, now uses `__BUILD_HASH__`)
+3. Consider adding fun fact blurbs to the UI (see Future Enhancements)
