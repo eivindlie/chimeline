@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/generator";
 import { getToken } from "../lib/spotifyAuth";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
-import { generateQRCodeBlob } from "../lib/qrGenerator";
 import { type CardData } from "../lib/schemas";
 import { parsePlaylistUrl, fetchPlaylistTracks } from "../lib/spotifyPlaylist";
 import { generateCardsPDFFromTracks } from "../lib/pdfCardGenerator";
@@ -71,21 +70,6 @@ export default function GeneratorPage() {
       setPlaylistTracks([]);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!qrDataUrl || !cardData) return;
-
-    setError(null);
-
-    try {
-      const filename = `${cardData.title}.png`;
-      await downloadQRFromDataUrl(qrDataUrl, filename);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      console.error("Download error:", message);
-      setError(message);
     }
   };
 
