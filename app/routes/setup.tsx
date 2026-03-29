@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import { getToken } from "~/lib/spotifyAuth";
 import { useAuthRedirect } from "~/lib/useAuthRedirect";
 import { useSpotifyPlayer } from "~/lib/useSpotifyPlayer";
@@ -10,6 +11,7 @@ import styles from "./setup.module.css";
 
 export default function Setup() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [step, setStep] = useState<"welcome" | "playing" | "success" | "error">("welcome");
   const [errorMessage, setErrorMessage] = useState("");
   const [token, setToken] = useState<string | null>(null);
@@ -154,7 +156,7 @@ export default function Setup() {
       <div className={styles.container}>
         <div className={styles.card}>
           <div className={styles.spinner}></div>
-          <p>Connecting to Spotify...</p>
+          <p>{t('setup.connecting')}</p>
         </div>
       </div>
     );
@@ -165,12 +167,12 @@ export default function Setup() {
       {step === "welcome" && (
         <div className={styles.card}>
           <div className={styles.instructions}>
-            <p>Click the button to open Spotify.</p>
-            <p>Listen for an iconic theme—verify you hear sound.</p>
-            <p>Return to the app when ready. ✨</p>
+            <p>{t('setup.instruction1')}</p>
+            <p>{t('setup.instruction2')}</p>
+            <p>{t('setup.instruction3')}</p>
           </div>
           <button onClick={handleStartPlaying} className={styles.button}>
-            Test Device
+            {t('setup.testDevice')}
           </button>
         </div>
       )}
@@ -178,14 +180,14 @@ export default function Setup() {
       {step === "playing" && (
         <div className={styles.card}>
           <div className={styles.spinner}></div>
-          <p>{isDesktop() ? "Playing test track..." : "Setting up..."}</p>
+          <p>{isDesktop() ? t('setup.playing') : t('setup.settingUp')}</p>
         </div>
       )}
 
       {step === "success" && (
         <div className={styles.card}>
           <div className={styles.success}>✓</div>
-          <p>Ready to play!</p>
+          <p>{t('setup.ready')}</p>
         </div>
       )}
 
@@ -194,7 +196,7 @@ export default function Setup() {
           <div className={styles.errorContent}>
             <p className={styles.errorMessage}>{errorMessage}</p>
             <button onClick={() => setStep("welcome")} className={styles.button}>
-              Try Again
+              {t('setup.tryAgain')}
             </button>
           </div>
         </div>

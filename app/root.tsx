@@ -8,9 +8,11 @@ import {
 } from "react-router";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 
 import type { Route } from "./+types/root";
 import { useServiceWorkerUpdate } from "./lib/useServiceWorkerUpdate";
+import "./lib/i18n";
 import "./app.css";
 import styles from "./root.module.css";
 
@@ -23,7 +25,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="nb">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -50,6 +52,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   const navigate = useNavigate();
   const { updateAvailable, handleUpdate, isUpdating } = useServiceWorkerUpdate();
+  const { t, i18n } = useTranslation();
+
+  // Keep <html lang> in sync with active language
+  useEffect(() => {
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
 
   useEffect(() => {
     // Handle GitHub Pages 404.html redirect fallback for SPA routing
@@ -65,13 +73,13 @@ export default function App() {
     <div className={styles.root}>
       {updateAvailable && (
         <div className={styles.updateBanner}>
-          <span>✨ A new version is available</span>
+          <span>✨ {t('common.updateAvailable')}</span>
           <button
             onClick={handleUpdate}
             disabled={isUpdating}
             className={styles.updateButton}
           >
-            {isUpdating ? <span className={styles.updateSpinner} /> : "Update"}
+            {isUpdating ? <span className={styles.updateSpinner} /> : t('common.update')}
           </button>
         </div>
       )}

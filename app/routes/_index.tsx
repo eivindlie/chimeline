@@ -1,5 +1,6 @@
 import { useNavigate, Link } from "react-router";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/_index";
 import styles from "./_index.module.css";
 import LogoFull from "../assets/logo-full-dark.svg";
@@ -14,6 +15,12 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
+  const changeLanguage = (lang: string) => {
+    i18n.changeLanguage(lang);
+    localStorage.setItem('chimeline_lang', lang);
+  };
 
   const isDesktop = () => {
     return !('ontouchstart' in window) && !navigator.maxTouchPoints;
@@ -41,14 +48,30 @@ export default function Home() {
     <div className={styles.container}>
       <div className={styles.content}>
         <img src={LogoFull} alt="ChimeLine" className={styles.logo} />
-        
+
         <button onClick={handleStartPlaying} className={styles.mainButton}>
-          🎵 Start playing
+          {t('home.start')}
         </button>
 
         <Link to="/generator" className={styles.generatorLink}>
-          Generate QR codes
+          {t('home.generate')}
         </Link>
+
+        <div className={styles.langSwitcher}>
+          <button
+            onClick={() => changeLanguage('nb')}
+            className={i18n.language === 'nb' ? styles.langActive : styles.langBtn}
+          >
+            nb
+          </button>
+          {' | '}
+          <button
+            onClick={() => changeLanguage('en')}
+            className={i18n.language === 'en' ? styles.langActive : styles.langBtn}
+          >
+            en
+          </button>
+        </div>
       </div>
     </div>
   );

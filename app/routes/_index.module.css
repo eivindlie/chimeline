@@ -60,6 +60,34 @@
   color: var(--text-primary);
 }
 
+.langSwitcher {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+.langBtn,
+.langActive {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 0;
+  transition: var(--transition-short);
+}
+
+.langBtn {
+  color: var(--text-tertiary);
+}
+
+.langBtn:hover {
+  color: var(--text-secondary);
+}
+
+.langActive {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
 /* Mobile responsiveness */
 @media (max-width: 480px) {
   .container {

@@ -1,0 +1,54 @@
+{
+  "common": {
+    "updateAvailable": "A new version is available",
+    "update": "Update"
+  },
+  "home": {
+    "start": "🎵 Start playing",
+    "generate": "Generate QR codes"
+  },
+  "scanner": {
+    "startScanning": "Start Scanning",
+    "cancel": "Cancel",
+    "scanNext": "📱 Scan next",
+    "connecting": "Connecting to Spotify...",
+    "loading": "Loading...",
+    "pause": "Pause",
+    "play": "Play",
+    "redirecting": "Redirecting to login...",
+    "deviceNotConfigured": "Device not configured",
+    "goToSetup": "Go to setup first"
+  },
+  "generator": {
+    "title": "QR Code Generator",
+    "subtitle": "Generate printable QR cards from a Spotify playlist",
+    "playlistLabel": "Spotify Playlist URL or URI:",
+    "playlistPlaceholder": "paste spotify:playlist:XXXX or https://open.spotify.com/playlist/XXXX",
+    "playlistHint": "Supports: spotify:playlist:ID, open.spotify.com URL, or playlist ID. The playlist must be owned by you or followed in your Spotify account — editorial and third-party playlists you don't follow cannot be fetched.",
+    "seriesLabel": "Series mark (optional, 2–3 letters):",
+    "seriesPlaceholder": "e.g. A1",
+    "seriesHint": "Printed in the corner of each title card to identify the series.",
+    "fetch": "Fetch Playlist",
+    "fetching": "Fetching tracks...",
+    "tracksHeading": "Playlist Tracks",
+    "trackCount_one": "{{count}} track",
+    "trackCount_other": "{{count}} tracks",
+    "downloadPdf": "📥 Download PDF",
+    "generatingPdf": "Generating PDF...",
+    "redirecting": "Redirecting to Spotify login..."
+  },
+  "setup": {
+    "instruction1": "Click the button to open Spotify.",
+    "instruction2": "Listen for an iconic theme—verify you hear sound.",
+    "instruction3": "Return to the app when ready. ✨",
+    "testDevice": "Test Device",
+    "playing": "Playing test track...",
+    "settingUp": "Setting up...",
+    "ready": "Ready to play!",
+    "tryAgain": "Try Again",
+    "connecting": "Connecting to Spotify..."
+  },
+  "callback": {
+    "authenticating": "Authenticating..."
+  }
+}

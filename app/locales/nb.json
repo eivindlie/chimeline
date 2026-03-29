@@ -1,0 +1,54 @@
+{
+  "common": {
+    "updateAvailable": "En ny versjon er tilgjengelig",
+    "update": "Oppdater"
+  },
+  "home": {
+    "start": "🎵 Start spilling",
+    "generate": "Generer QR-koder"
+  },
+  "scanner": {
+    "startScanning": "Begynn å skanne",
+    "cancel": "Avbryt",
+    "scanNext": "📱 Skann neste",
+    "connecting": "Kobler til Spotify...",
+    "loading": "Laster...",
+    "pause": "Pause",
+    "play": "Spill",
+    "redirecting": "Videresender til innlogging...",
+    "deviceNotConfigured": "Enhet ikke konfigurert",
+    "goToSetup": "Gå til oppsett først"
+  },
+  "generator": {
+    "title": "QR-kodegenerator",
+    "subtitle": "Generer QR-kort til utskrift fra en Spotify-spilleliste",
+    "playlistLabel": "Spotify-spilleliste-URL eller URI:",
+    "playlistPlaceholder": "lim inn spotify:playlist:XXXX eller https://open.spotify.com/playlist/XXXX",
+    "playlistHint": "Støtter: spotify:playlist:ID, open.spotify.com-URL, eller spilleliste-ID. Spillelisten må eies av deg eller følges i din Spotify-konto — redaksjonelle og tredjepartsspillelister du ikke følger, kan ikke hentes.",
+    "seriesLabel": "Seriemerke (valgfritt, 2–3 bokstaver):",
+    "seriesPlaceholder": "f.eks. A1",
+    "seriesHint": "Trykkes i hjørnet av hvert titelkort for å identifisere serien.",
+    "fetch": "Hent spilleliste",
+    "fetching": "Henter spor...",
+    "tracksHeading": "Spillelistespor",
+    "trackCount_one": "{{count}} spor",
+    "trackCount_other": "{{count}} spor",
+    "downloadPdf": "📥 Last ned PDF",
+    "generatingPdf": "Genererer PDF...",
+    "redirecting": "Videresender til Spotify-innlogging..."
+  },
+  "setup": {
+    "instruction1": "Trykk på knappen for å åpne Spotify.",
+    "instruction2": "Lytt etter et kjent tema — bekreft at du hører lyd.",
+    "instruction3": "Kom tilbake til appen når du er klar. ✨",
+    "testDevice": "Test enhet",
+    "playing": "Spiller testspor...",
+    "settingUp": "Setter opp...",
+    "ready": "Klar til å spille!",
+    "tryAgain": "Prøv igjen",
+    "connecting": "Kobler til Spotify..."
+  },
+  "callback": {
+    "authenticating": "Autentiserer..."
+  }
+}

@@ -1,3 +1,4 @@
+import i18next from './i18n';
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import type { CardData } from './schemas';
@@ -147,7 +148,8 @@ export async function generateCardsPDFFromTracks(
         const rowTracks = pageTracks.slice(i, i + 3);
         const cells: Record<string, unknown>[] = rowTracks.map((track) => {
           const year = new Date(track.releaseDate).getFullYear();
-          const formattedDate = new Date(track.releaseDate).toLocaleDateString('nb-NO', {
+          const dateLocale = i18next.language === 'nb' ? 'nb-NO' : 'en-GB';
+          const formattedDate = new Date(track.releaseDate).toLocaleDateString(dateLocale, {
             day: 'numeric',
             month: 'short',
           });

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/generator";
 import { getToken } from "../lib/spotifyAuth";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
@@ -16,6 +17,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function GeneratorPage() {
+  const { t } = useTranslation();
   // Playlist state
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [playlistTracks, setPlaylistTracks] = useState<CardData[]>([]);
@@ -115,49 +117,46 @@ export default function GeneratorPage() {
   if (!isAuthed) {
     return (
       <div className={styles.container}>
-        <h1>QR Code Generator</h1>
-        <p>Redirecting to Spotify login...</p>
+        <h1>{t('generator.title')}</h1>
+        <p>{t('generator.redirecting')}</p>
       </div>
     );
   }
 
   return (
     <div className={styles.container}>
-      <h1>QR Code Generator</h1>
+      <h1>{t('generator.title')}</h1>
 
-      <p>Generate printable QR cards from a Spotify playlist</p>
+      <p>{t('generator.subtitle')}</p>
 
       <div className={styles.formSection}>
         <div className={styles.inputGroup}>
-          <label htmlFor="playlistUrl">Spotify Playlist URL or URI:</label>
+          <label htmlFor="playlistUrl">{t('generator.playlistLabel')}</label>
           <input
             id="playlistUrl"
             type="text"
-            placeholder="paste spotify:playlist:XXXX or https://open.spotify.com/playlist/XXXX"
+            placeholder={t('generator.playlistPlaceholder')}
             value={playlistUrl}
             onChange={(e) => setPlaylistUrl(e.target.value)}
             disabled={isLoading}
             className={styles.input}
           />
-          <small>
-            Supports: spotify:playlist:ID, open.spotify.com URL, or playlist ID.
-            The playlist must be owned by you or followed in your Spotify account — editorial and third-party playlists you don't follow cannot be fetched.
-          </small>
+          <small>{t('generator.playlistHint')}</small>
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="seriesMark">Series mark (optional, 2–3 letters):</label>
+          <label htmlFor="seriesMark">{t('generator.seriesLabel')}</label>
           <input
             id="seriesMark"
             type="text"
-            placeholder="e.g. A1"
+            placeholder={t('generator.seriesPlaceholder')}
             value={seriesMark}
             onChange={(e) => setSeriesMark(e.target.value.slice(0, 3))}
             disabled={isLoading}
             className={styles.input}
             style={{ width: "6rem" }}
           />
-          <small>Printed in the corner of each title card to identify the series.</small>
+          <small>{t('generator.seriesHint')}</small>
         </div>
 
         <button
@@ -165,7 +164,7 @@ export default function GeneratorPage() {
           disabled={isLoading || !playlistUrl.trim()}
           className={styles.button}
         >
-          {isLoading ? "Fetching tracks..." : "Fetch Playlist"}
+          {isLoading ? t('generator.fetching') : t('generator.fetch')}
         </button>
       </div>
 
@@ -174,8 +173,7 @@ export default function GeneratorPage() {
       {playlistTracks.length > 0 && (
         <div className={styles.resultsSection}>
           <h2>
-            Playlist Tracks ({playlistTracks.length} track
-            {playlistTracks.length !== 1 ? "s" : ""})
+            {t('generator.tracksHeading')} ({t('generator.trackCount', { count: playlistTracks.length })})
           </h2>
           <div className={styles.trackList}>
             {playlistTracks.map((track, idx) => (
@@ -190,7 +188,7 @@ export default function GeneratorPage() {
             disabled={isLoading}
             className={styles.button}
           >
-            {isLoading ? "Generating PDF..." : "📥 Download PDF"}
+            {isLoading ? t('generator.generatingPdf') : t('generator.downloadPdf')}
           </button>
         </div>
       )}

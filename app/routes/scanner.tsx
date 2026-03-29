@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/scanner";
 import { useAuthRedirect } from "../lib/useAuthRedirect";
 import { useSpotifyPlayer } from "../lib/useSpotifyPlayer";
@@ -36,6 +37,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function ScannerPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isScanning, setIsScanning] = useState(false);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -281,7 +283,7 @@ export default function ScannerPage() {
   if (!isAuthed) {
     return (
       <div className={styles.container}>
-        <p>Redirecting to login...</p>
+        <p>{t('scanner.redirecting')}</p>
       </div>
     );
   }
@@ -290,9 +292,9 @@ export default function ScannerPage() {
   if (!isDesktop() && !selectedDeviceId) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>Device not configured</div>
+        <div className={styles.error}>{t('scanner.deviceNotConfigured')}</div>
         <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-          Go to setup first
+          {t('scanner.goToSetup')}
         </p>
       </div>
     );
@@ -310,14 +312,14 @@ export default function ScannerPage() {
         isDesktop() && token && !playerReady ? (
           <div className={styles.loadingContainer}>
             <div className={styles.spinner}></div>
-            <p>{playerError ?? "Connecting to Spotify..."}</p>
+            <p>{playerError ?? t('scanner.connecting')}</p>
           </div>
         ) : (
           <button
             onClick={handleStartScanning}
             className={styles.scanButton}
           >
-            Start Scanning
+            {t('scanner.startScanning')}
           </button>
         )
       )}
@@ -330,7 +332,7 @@ export default function ScannerPage() {
             onClick={handleStopScanning}
             className={styles.stopButton}
           >
-            Cancel
+            {t('scanner.cancel')}
           </button>
         </>
       )}
@@ -339,7 +341,7 @@ export default function ScannerPage() {
       {isLoadingTrack && (
         <div className={styles.loadingContainer}>
           <div className={styles.spinner}></div>
-          <p>Loading...</p>
+          <p>{t('scanner.loading')}</p>
         </div>
       )}
 
@@ -349,7 +351,7 @@ export default function ScannerPage() {
           <button
             onClick={handlePlayPause}
             className={`${styles.playButton} ${isPlaying ? styles.playing : ""}`}
-            title={isPlaying ? "Pause" : "Play"}
+            title={isPlaying ? t('scanner.pause') : t('scanner.play')}
           >
             {isPlaying ? (
               <svg viewBox="0 0 24 24" fill="currentColor">
@@ -366,7 +368,7 @@ export default function ScannerPage() {
             onClick={handleScanNext}
             className={styles.scanNextButton}
           >
-            📱 Scan next
+            {t('scanner.scanNext')}
           </button>
         </div>
       )}

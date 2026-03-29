@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { useTranslation } from "react-i18next";
 import { exchangeCodeForToken, saveToken, saveRefreshToken, saveTokenExpiry, fetchUserProfile, saveUser, getAndClearRedirectPath } from "../lib/spotifyAuth";
 import styles from "./callback.module.css";
 
@@ -10,6 +11,7 @@ export function meta() {
 export default function CallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,7 +100,7 @@ export default function CallbackPage() {
       ) : (
         <div className={styles.loadingContainer}>
           <div className={styles.spinner}></div>
-          <p className={styles.loadingText}>Authenticating...</p>
+          <p className={styles.loadingText}>{t('callback.authenticating')}</p>
         </div>
       )}
     </div>
