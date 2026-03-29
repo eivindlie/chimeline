@@ -38,25 +38,40 @@ async function imageToDataUrl(imagePath: string, w: number, h: number): Promise<
   });
 }
 
-const CONTENT = {
+interface Step {
+  text: string;
+  subItems?: string[];
+}
+
+const CONTENT: Record<'nb' | 'en', { heading: string; steps: Step[] }> = {
   nb: {
     heading: 'Slik spiller du',
     steps: [
-      'Åpne chimeline.prograd.no for å scanne',
-      'Skann QR-koden på kortet',
-      'Hør sangen og gjett utgivelsesår',
-      'Plasser kortet på tidslinjen',
-      'Første til 10 kort vinner!',
+      { text: 'Åpne chimeline.prograd.no for å scanne' },
+      { text: 'Alle starter med 3 bonuskort' },
+      { text: 'Skann QR-koden på kortet' },
+      { text: 'Hør sangen og gjett utgivelsesår' },
+      {
+        text: 'Gjett riktig tittel og artist for å få et bonuskort. Bonuskortene kan brukes til å:',
+        subItems: ['Utfordre andres plassering', 'Hoppe over en sang du ikke greier'],
+      },
+      { text: 'Plasser kortet på tidslinjen' },
+      { text: 'Første til 10 kort vinner!' },
     ],
   },
   en: {
     heading: 'How to play',
     steps: [
-      'Open chimeline.prograd.no to scan',
-      'Scan the QR code on the card',
-      'Listen and guess the release year',
-      'Place the card on the timeline',
-      'First to 10 cards wins!',
+      { text: 'Open chimeline.prograd.no to scan' },
+      { text: 'Everyone starts with 3 bonus cards' },
+      { text: 'Scan the QR code on the card' },
+      { text: 'Listen and guess the release year' },
+      {
+        text: 'Guess title and artist correctly to earn a bonus card. Bonus cards can be used to:',
+        subItems: ['Challenge another player\'s placement', 'Skip a song you can\'t figure out'],
+      },
+      { text: 'Place the card on the timeline' },
+      { text: 'First to 10 cards wins!' },
     ],
   },
 };
@@ -83,13 +98,27 @@ function buildCell(lang: 'nb' | 'en', logoDataUrl: string) {
         color: '#111111',
         margin: [PAD, 0, PAD, 10],
       },
-      ...steps.map((step, i) => ({
-        text: `${i + 1}.  ${step}`,
-        fontSize: 10,
-        color: '#111111',
-        margin: [PAD, 0, PAD, 8],
-        lineHeight: 1.3,
-      })),
+      ...steps.flatMap((step, i) => {
+        const items: object[] = [
+          {
+            text: `${i + 1}.  ${step.text}`,
+            fontSize: 10,
+            color: '#111111',
+            margin: [PAD, 0, PAD, step.subItems ? 3 : 8],
+            lineHeight: 1.3,
+          },
+        ];
+        if (step.subItems) {
+          items.push({
+            ul: [...step.subItems],
+            fontSize: 9,
+            color: '#444444',
+            margin: [PAD + 12, 0, PAD, 8],
+            lineHeight: 1.3,
+          });
+        }
+        return items;
+      }),
     ],
     border: [true, true, true, true],
     borderColor: '#bbbbbb',
