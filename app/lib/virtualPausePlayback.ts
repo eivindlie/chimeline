@@ -66,10 +66,11 @@ export async function virtualPause(deviceId: string): Promise<void> {
 
   saveVirtualPauseState(pauseState);
 
-  // Switch to silence — device stays active, no audio
+  // Switch to silence and loop it — device stays active indefinitely
   await playTrack(null, SILENCE_TRACK_URI, deviceId);
+  await setRepeatMode("track");
 
-  console.log(`⏸ Virtual pause: switched to 4'33'', position stored at ${pauseState.storedPosition}ms`);
+  console.log(`⏸ Virtual pause: switched to 4'33'' (looping), position stored at ${pauseState.storedPosition}ms`);
 }
 
 /**
