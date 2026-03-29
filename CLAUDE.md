@@ -119,10 +119,9 @@ Build hash baked into bundle via `vite.config.ts` `define: { __BUILD_HASH__ }` (
 
 ## Next Priorities
 
-1. **Auth guards** on `/scanner` and `/generator` routes
-2. **Fun fact blurbs** — surface easter-egg facts in the UI (e.g. "When you press pause, you're playing John Cage's 4'33''")
-3. **i18n** — Norwegian (`nb`) as primary language; `nb-NO` date formatting already in use
-4. **Printable instruction sheet** — PDF export from generator explaining how to play (scan → listen → place card on timeline), with series mark legend
+1. **Fun fact blurbs** — surface easter-egg facts in the UI (e.g. "When you press pause, you're playing John Cage's 4'33''")
+2. **i18n** — Norwegian (`nb`) as primary language; `nb-NO` date formatting already in use
+3. **Printable instruction sheet** — PDF export from generator explaining how to play (scan → listen → place card on timeline), with series mark legend
 
 ---
 
