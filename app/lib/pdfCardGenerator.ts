@@ -53,6 +53,59 @@ export interface PDFGenerationOptions {
   seriesMark?: string; // Short series identifier (2-3 chars) shown in bottom-right of title cards
 }
 
+// --- Title card layout helpers ---
+// Cell content area: 185pt row height − 5pt top − 5pt bottom cell margin = 175pt
+const CELL_CONTENT_PT = 175;
+const TITLE_LINE_PT = 13;   // 11pt bold font line height
+const ARTIST_LINE_PT = 10;  // 8pt font line height
+const CENTER_BLOCK_PT = 50; // date line (10pt + 2pt margin) + year line (38pt)
+const TITLE_CHARS_PER_LINE = 28;
+const ARTIST_CHARS_PER_LINE = 40;
+const MAX_TITLE_LINES = 4;
+const MAX_ARTIST_LINES = 2;
+
+function estimateLines(text: string, charsPerLine: number): number {
+  const words = text.split(/\s+/);
+  let lines = 1;
+  let lineLen = 0;
+  for (const word of words) {
+    if (lineLen === 0) {
+      lineLen = word.length;
+    } else if (lineLen + 1 + word.length > charsPerLine) {
+      lines++;
+      lineLen = word.length;
+    } else {
+      lineLen += 1 + word.length;
+    }
+  }
+  return lines;
+}
+
+function clampToLines(text: string, charsPerLine: number, maxLines: number): string {
+  const words = text.split(/\s+/);
+  let lines = 1;
+  let lineLen = 0;
+  const kept: string[] = [];
+  for (const word of words) {
+    if (kept.length === 0) {
+      kept.push(word);
+      lineLen = word.length;
+    } else if (lineLen + 1 + word.length > charsPerLine) {
+      if (lines >= maxLines) {
+        kept[kept.length - 1] += '…';
+        break;
+      }
+      lines++;
+      kept.push(word);
+      lineLen = word.length;
+    } else {
+      kept.push(word);
+      lineLen += 1 + word.length;
+    }
+  }
+  return kept.join(' ');
+}
+
 /**
  * Generate a PDF of card grid with proper A4 formatting directly from track data
  * Each card is 65×65mm in a 3×4 grid (12 cards per page)
@@ -153,6 +206,16 @@ export async function generateCardsPDFFromTracks(
             day: 'numeric',
             month: 'short',
           });
+          const displayTitle = clampToLines(track.title, TITLE_CHARS_PER_LINE, MAX_TITLE_LINES);
+          const displayArtist = clampToLines(track.artist, ARTIST_CHARS_PER_LINE, MAX_ARTIST_LINES);
+          const seriesMarkPt = seriesMark ? 11 : 0; // ~7pt text + 4pt top margin
+          const usedPt =
+            estimateLines(displayTitle, TITLE_CHARS_PER_LINE) * TITLE_LINE_PT +
+            CENTER_BLOCK_PT +
+            estimateLines(displayArtist, ARTIST_CHARS_PER_LINE) * ARTIST_LINE_PT +
+            seriesMarkPt;
+          const gap = Math.max(2, Math.floor((CELL_CONTENT_PT - usedPt) / 2));
+
           return {
             stack: [
               {
@@ -166,11 +229,11 @@ export async function generateCardsPDFFromTracks(
               {
                 stack: [
                   {
-                    text: track.title,
+                    text: displayTitle,
                     fontSize: 11,
                     bold: true,
                     alignment: 'center',
-                    margin: [0, 0, 0, 45],
+                    margin: [0, 0, 0, gap],
                   },
                   {
                     text: formattedDate,
@@ -186,10 +249,10 @@ export async function generateCardsPDFFromTracks(
                     margin: [0, 0, 0, 0],
                   },
                   {
-                    text: track.artist,
+                    text: displayArtist,
                     fontSize: 8,
                     alignment: 'center',
-                    margin: [0, 45, 0, 0],
+                    margin: [0, gap, 0, 0],
                   },
                   ...(seriesMark ? [{
                     text: seriesMark.toUpperCase(),
@@ -218,77 +281,77 @@ export async function generateCardsPDFFromTracks(
       // Reverse columns for long-edge flip alignment
       const reversedTitleBody = titleTableBody.map((row) => [...row].reverse());
 
-      // Add QR page
+      // Add QR page — always pageBreak: 'after' so the title page starts clean
       pages.push({
-        text: pageIndex === 0 ? 'PAGE 1: QR CODES (Print First)' : `QR CODES - Page ${pageIndex * 2 + 1}`,
-        fontSize: 10,
-        color: '#666',
-        alignment: 'center',
-        margin: [0, 0, 0, 3],
-      });
-      pages.push({
-        text: pageIndex === 0
-          ? 'Use automatic duplex printing (double-sided) with long-edge flip. Printer will automatically flip and print song titles on the back. Then cut all cards.'
-          : 'Continue with automatic duplex printing. Printer will handle the flip.',
-        fontSize: 8,
-        color: '#999',
-        alignment: 'center',
-        margin: [0, 0, 0, 10],
-      });
-      pages.push({
-        table: {
-          widths: ['*', '*', '*'],
-          heights: new Array(qrTableBody.length).fill(185),
-          body: qrTableBody,
-          headerRows: 0,
-        },
-        layout: {
-          hLineWidth: () => 0.5,
-          vLineWidth: () => 0.5,
-          hLineColor: () => '#d0d0d0',
-          vLineColor: () => '#d0d0d0',
-        },
-      });
-      pages.push({
-        text: '',
+        stack: [
+          {
+            text: pageIndex === 0 ? 'PAGE 1: QR CODES (Print First)' : `QR CODES - Page ${pageIndex * 2 + 1}`,
+            fontSize: 10,
+            color: '#666',
+            alignment: 'center',
+            margin: [0, 0, 0, 3],
+          },
+          {
+            text: pageIndex === 0
+              ? 'Use automatic duplex printing (double-sided) with long-edge flip. Printer will automatically flip and print song titles on the back. Then cut all cards.'
+              : 'Continue with automatic duplex printing. Printer will handle the flip.',
+            fontSize: 8,
+            color: '#999',
+            alignment: 'center',
+            margin: [0, 0, 0, 10],
+          },
+          {
+            table: {
+              widths: ['*', '*', '*'],
+              heights: new Array(qrTableBody.length).fill(185),
+              body: qrTableBody,
+              headerRows: 0,
+            },
+            layout: {
+              hLineWidth: () => 0.5,
+              vLineWidth: () => 0.5,
+              hLineColor: () => '#d0d0d0',
+              vLineColor: () => '#d0d0d0',
+            },
+          },
+        ],
         pageBreak: 'after',
       });
 
-      // Add title page
+      // Add title page — no explicit pageBreak needed; QR stack's 'after' already advanced the page
       pages.push({
-        text: `SONG TITLES - Page ${pageIndex * 2 + 2}`,
-        fontSize: 10,
-        color: '#666',
-        alignment: 'center',
-        margin: [0, 0, 0, 3],
+        stack: [
+          {
+            text: `SONG TITLES - Page ${pageIndex * 2 + 2}`,
+            fontSize: 10,
+            color: '#666',
+            alignment: 'center',
+            margin: [0, 0, 0, 3],
+          },
+          {
+            text: pageIndex === pageCount - 1
+              ? 'Duplex printing complete! Simply cut all cards. Each card has QR code on front and song title on back.'
+              : 'Duplex printing will continue automatically.',
+            fontSize: 8,
+            color: '#999',
+            alignment: 'center',
+            margin: [0, 0, 0, 10],
+          },
+          {
+            table: {
+              widths: ['*', '*', '*'],
+              heights: new Array(reversedTitleBody.length).fill(185),
+              body: reversedTitleBody,
+              headerRows: 0,
+            },
+            layout: {
+              hLineWidth: () => 0,
+              vLineWidth: () => 0,
+            },
+          },
+        ],
+        pageBreak: pageIndex < pageCount - 1 ? 'after' : undefined,
       });
-      pages.push({
-        text: pageIndex === pageCount - 1
-          ? 'Duplex printing complete! Simply cut all cards. Each card has QR code on front and song title on back.'
-          : 'Duplex printing will continue automatically.',
-        fontSize: 8,
-        color: '#999',
-        alignment: 'center',
-        margin: [0, 0, 0, 10],
-      });
-      pages.push({
-        table: {
-          widths: ['*', '*', '*'],
-          heights: new Array(reversedTitleBody.length).fill(185),
-          body: reversedTitleBody,
-          headerRows: 0,
-        },
-        layout: {
-          hLineWidth: () => 0,
-          vLineWidth: () => 0,
-        },
-      });
-      if (pageIndex < pageCount - 1) {
-        pages.push({
-          text: '',
-          pageBreak: 'after',
-        });
-      }
     }
 
     // Create the document definition with dynamically generated pages
